@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 package army2.server;
+
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -37,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Random;
+
 /**
  *
  * @author ASD
@@ -47,12 +49,13 @@ public class User {
     private String report;
     private String notievent;
     private String notibaotri;
-	
-	public static MD5 md5 = new MD5();
+
+    public static MD5 md5 = new MD5();
 
     public static Random rd = new Random();
+
     void saveData() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     public static class ruongDoItemEntry {
@@ -85,6 +88,7 @@ public class User {
         int idItem;
         int numb;
     }
+
     public static int UserOnline;
     public int saveData;
     private final ClientEntry client;
@@ -170,45 +174,46 @@ public class User {
         return this.xu;
     }
 
-	public boolean[] getItemClan() throws IOException {
-		boolean[] isItem = new boolean[10];
-		if (this.clan > 0) {
-			try {
-				ResultSet red;
-				red = SQLManager.stat.executeQuery("SELECT `item` FROM clan WHERE id = " + this.clan + " LIMIT 1;");
-				red.first();
-			
-				Date[] itemClanArray = new Date[10];
-				Date DateBayGio = new Date();
-				JSONObject itemClan = (JSONObject) JSONValue.parse(red.getString("item"));
-				for (int i = 0; i < 10; i++) {
-					itemClanArray[i] = Until.getDate(itemClan.get("" + (i + 1) + "").toString());
-					if (itemClanArray[i].after(DateBayGio)) {
-						isItem[i] = true;
-					} else {
-						isItem[i] = false;
-					}
-				}
-				red.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		} 
-		return isItem;
-	}
+    public boolean[] getItemClan() throws IOException {
+        boolean[] isItem = new boolean[10];
+        if (this.clan > 0) {
+            try {
+                ResultSet red;
+                red = SQLManager.stat.executeQuery("SELECT `item` FROM clan WHERE id = " + this.clan + " LIMIT 1;");
+                red.first();
 
-	public synchronized void updateClan(int xp, int cup) throws IOException {
-		if (this.clan > 0) {
-			if (xp > (25000 * 127 * 128)) {
-				xp = 25000 * 127 * 128;
-			}
-			try {
-				SQLManager.stat.executeUpdate("UPDATE `clan` SET `xp` = `xp` + " + xp + " , `cup` = `cup` + " + cup + " WHERE `id` = " + this.clan + ";");
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
-	}
+                Date[] itemClanArray = new Date[10];
+                Date DateBayGio = new Date();
+                JSONObject itemClan = (JSONObject) JSONValue.parse(red.getString("item"));
+                for (int i = 0; i < 10; i++) {
+                    itemClanArray[i] = Until.getDate(itemClan.get("" + (i + 1) + "").toString());
+                    if (itemClanArray[i].after(DateBayGio)) {
+                        isItem[i] = true;
+                    } else {
+                        isItem[i] = false;
+                    }
+                }
+                red.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return isItem;
+    }
+
+    public synchronized void updateClan(int xp, int cup) throws IOException {
+        if (this.clan > 0) {
+            if (xp > (25000 * 127 * 128)) {
+                xp = 25000 * 127 * 128;
+            }
+            try {
+                SQLManager.stat.executeUpdate("UPDATE `clan` SET `xp` = `xp` + " + xp + " , `cup` = `cup` + " + cup
+                        + " WHERE `id` = " + this.clan + ";");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     public synchronized void updateXu(int xuUp) throws IOException {
         this.xu += xuUp;
@@ -216,7 +221,7 @@ public class User {
             return;
         }
         // Send update Xu
-        //System.out.println("xu hien tai = " + this.xu);
+        // System.out.println("xu hien tai = " + this.xu);
         Message ms = new Message(105);
         DataOutputStream ds = ms.writer();
         ds.writeInt(this.xu);
@@ -224,9 +229,11 @@ public class User {
         ds.flush();
         sendMessage(ms);
     }
+
     public synchronized void updateEvent1(int xuUp) throws IOException {
         try {
-            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `online`=0, `idapp`=-1 WHERE `id`=" + this.iddb + " LIMIT 1;");
+            SQLManager.stat
+                    .executeUpdate("UPDATE `armymem` SET `online`=0, `idapp`=-1 WHERE `id`=" + this.iddb + " LIMIT 1;");
         } catch (SQLException ex) {
             Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -235,23 +242,24 @@ public class User {
     public void getTopTeamMessage(User us, Message ms) throws IOException {
         byte page = ms.reader().readByte();
         DataOutputStream ds;
-        ms = new Message(116); ds = ms.writer();
-        
+        ms = new Message(116);
+        ds = ms.writer();
+
         int level = 0;
         int xp = 0;
-        
+
         try {
             ResultSet red;
             red = SQLManager.stat.executeQuery("SELECT * FROM clan ORDER BY xp DESC LIMIT 50;");
-            
+
             ds.writeByte(page);
 
-            while(red.next()) {
-                
-                level = ((int)Math.sqrt(1+red.getInt("xp")/6250)+1)>>1;
+            while (red.next()) {
+
+                level = ((int) Math.sqrt(1 + red.getInt("xp") / 6250) + 1) >> 1;
                 xp = red.getInt("xp");
-                xp -= (level)*(level-1)*25000;
-                
+                xp -= (level) * (level - 1) * 25000;
+
                 ds.writeShort(red.getInt("icon")); // icon clan
                 ds.writeUTF(red.getString("name")); // tên clan
 
@@ -265,24 +273,20 @@ public class User {
                 ds.writeInt(red.getInt("cup")); // cúp
 
                 ds.writeByte(level > 127 ? 127 : level); // lever
-                ds.writeByte((byte)(xp/level/500)); // phần trăm lv
+                ds.writeByte((byte) (xp / level / 500)); // phần trăm lv
                 ds.writeUTF(red.getString("thongBao")); // thông báo clan
             }
-        
-        } catch(SQLException e) {
+
+        } catch (SQLException e) {
             e.printStackTrace();
         }
-        
-        
-        
-        
-        
+
         ds.flush();
         us.sendMessage(ms);
-    }    
-    
+    }
+
     public void clanInfoMessage(User us, Message ms) throws IOException {
-        //  Short idClan  = ms.reader().readShort();
+        // Short idClan = ms.reader().readShort();
 
         log("ID Clan: " + clan);
         if (clan == 0) {
@@ -297,7 +301,7 @@ public class User {
         try {
             ResultSet red;
             red = SQLManager.stat.executeQuery("SELECT * FROM clan WHERE id = '" + clan + "' LIMIT 1;");
-            red.first(); 
+            red.first();
 
             DataOutputStream ds;
             if (red.getShort("id") != 0) {
@@ -309,7 +313,7 @@ public class User {
                 ds.writeUTF(red.getString("name")); // tên clan
 
                 ds.writeByte(red.getInt("mem")); // thành viên
-                ds.writeByte(red.getInt("memmax")); // 
+                ds.writeByte(red.getInt("memmax")); //
 
                 ds.writeUTF(red.getString("masterName")); // chủ clan
 
@@ -318,20 +322,20 @@ public class User {
                 ds.writeInt(red.getInt("cup")); // cúp
 
                 int level = ((int) Math.sqrt(1 + red.getInt("xp") / 6250) + 1) >> 1;
-				level = level > 127 ? 127 : level;
+                level = level > 127 ? 127 : level;
                 int xp = red.getInt("xp");
 
-				int maxXP = 25000 * 127 * 128;
-	
+                int maxXP = 25000 * 127 * 128;
+
                 ds.writeInt(red.getInt("xp")); // exp
                 int xpUpLv = 25000 * level * (level + 1);
-				xpUpLv = xpUpLv > maxXP ? maxXP : xpUpLv;
-				
+                xpUpLv = xpUpLv > maxXP ? maxXP : xpUpLv;
+
                 ds.writeInt(xpUpLv); // exp to up level
 
                 ds.writeByte(level); // lever
                 xp -= (level) * (level - 1) * 25000;
-                //log("xp:" + xp);
+                // log("xp:" + xp);
                 ds.writeByte((byte) (xp / level / 500)); // phần trăm lv
                 ds.writeUTF(red.getString("thongBao")); // thông báo clan
                 ds.writeUTF(red.getString("dateCreat")); // ngày thành lập
@@ -341,15 +345,15 @@ public class User {
                 Date DateBayGio = new Date();
 
                 JSONObject itemClan = (JSONObject) JSONValue.parse(red.getString("item"));
-				int count = 0;
+                int count = 0;
                 for (int i = 0; i < 10; i++) {
                     itemClanArray[i] = Until.getDate(itemClan.get("" + (i + 1) + "").toString());
                     if (itemClanArray[i].after(DateBayGio)) {
                         isItem[i] = true;
-						count++;
+                        count++;
                     } else {
-						isItem[i] = false;
-					}
+                        isItem[i] = false;
+                    }
                 }
 
                 red.close();
@@ -357,23 +361,26 @@ public class User {
                 ds.writeByte(count); // số lượng item trong clan
 
                 for (int i = 0; i < 10; i++) {
-					if (isItem[i]) {
-						red = SQLManager.stat.executeQuery("SELECT * FROM clanitem WHERE item_id = '" + (i + 1) + "' LIMIT 1;");
-						if (red.first()) {
-							ds.writeUTF(red.getString("name"));
-							ds.writeInt((int) (itemClanArray[i].getTime() / 1000) - (int) (DateBayGio.getTime() / 1000));
-						} else {
-							ds.writeUTF("ITEM " + (i + 1));
-							ds.writeInt((int) (itemClanArray[i].getTime() / 1000) - (int) (DateBayGio.getTime() / 1000));
-						}
-						red.close();
-					}
+                    if (isItem[i]) {
+                        red = SQLManager.stat
+                                .executeQuery("SELECT * FROM clanitem WHERE item_id = '" + (i + 1) + "' LIMIT 1;");
+                        if (red.first()) {
+                            ds.writeUTF(red.getString("name"));
+                            ds.writeInt(
+                                    (int) (itemClanArray[i].getTime() / 1000) - (int) (DateBayGio.getTime() / 1000));
+                        } else {
+                            ds.writeUTF("ITEM " + (i + 1));
+                            ds.writeInt(
+                                    (int) (itemClanArray[i].getTime() / 1000) - (int) (DateBayGio.getTime() / 1000));
+                        }
+                        red.close();
+                    }
                 }
-				
-				// Update Level
-				SQLManager.stat.executeUpdate("UPDATE clan SET level = " + level + " WHERE id = " + clan + ";");
-				
-                //System.out.print("Truoc khi day");
+
+                // Update Level
+                SQLManager.stat.executeUpdate("UPDATE clan SET level = " + level + " WHERE id = " + clan + ";");
+
+                // System.out.print("Truoc khi day");
                 ds.flush();
                 us.sendMessage(ms);
                 // System.out.print("sau khi day");
@@ -384,27 +391,28 @@ public class User {
         }
     }
 
-public void getMemberTeamMessage(User us, Message ms) throws IOException {
-        //byte page = ms.reader().readByte();
+    public void getMemberTeamMessage(User us, Message ms) throws IOException {
+        // byte page = ms.reader().readByte();
         DataOutputStream ds;
-        ms = new Message(118); ds = ms.writer();
-        
+        ms = new Message(118);
+        ds = ms.writer();
+
         try {
-            
+
             ResultSet red;
-            red = SQLManager.stat.executeQuery("SELECT * FROM clanmem WHERE clan = '"+us.getClan()+"' LIMIT 100;");
+            red = SQLManager.stat.executeQuery("SELECT * FROM clanmem WHERE clan = '" + us.getClan() + "' LIMIT 100;");
             red.last();
             ds.writeByte(red.getRow()); // tổng số thành viên
             log("Member : " + red.getRow());
             red.close();
 
             ds.writeUTF("By Berus"); // tên đội
-            
+
             ResultSet res;
-            res = SQLManager.stat.executeQuery("SELECT * FROM clanmem WHERE clan = '"+us.getClan()+"' LIMIT 100;");
+            res = SQLManager.stat.executeQuery("SELECT * FROM clanmem WHERE clan = '" + us.getClan() + "' LIMIT 100;");
             ClanManager.member = new ArrayList<>();
-            
-            while(res.next()) {
+
+            while (res.next()) {
                 ClanMemEntry memberEntry = new ClanMemEntry();
                 memberEntry.id = res.getInt("id");
                 memberEntry.user = res.getInt("user");
@@ -417,80 +425,79 @@ public void getMemberTeamMessage(User us, Message ms) throws IOException {
                 log("Đậu phộng: " + res.getInt("id"));
             }
             res.close();
-            
-            
-            
-            int length = ClanManager.member.size();
-            
-            
 
-            for(int i = 0; i < length; i++) {
-            
+            int length = ClanManager.member.size();
+
+            for (int i = 0; i < length; i++) {
+
                 ClanMemEntry memClan = ClanManager.member.get(i);
-                
-                red = SQLManager.stat.executeQuery("SELECT user FROM user WHERE user_id=\""+memClan.user+"\" LIMIT 1;"); red.first();
-                
+
+                red = SQLManager.stat
+                        .executeQuery("SELECT user FROM user WHERE user_id=\"" + memClan.user + "\" LIMIT 1;");
+                red.first();
+
                 ds.writeInt(memClan.user); // iddb
 
                 ds.writeUTF(red.getString("user")); // tên nv
-                
+
                 red.close();
-                red = SQLManager.stat.executeQuery("SELECT NVused,`online` FROM armymem WHERE id=\""+memClan.user+"\" LIMIT 1;"); red.first();
+                red = SQLManager.stat
+                        .executeQuery("SELECT NVused,`online` FROM armymem WHERE id=\"" + memClan.user + "\" LIMIT 1;");
+                red.first();
 
                 ds.writeInt(1);
-                
+
                 byte nv = 0;
 
-                ds.writeByte((nv = red.getByte("NVused"))-1); // stt nhân vật 0->9
-                
+                ds.writeByte((nv = red.getByte("NVused")) - 1); // stt nhân vật 0->9
+
                 ds.writeByte(red.getInt("online")); // online: 1, offline: 0
-                
+
                 red.close();
-                red = SQLManager.stat.executeQuery("SELECT NV"+nv+" FROM armymem WHERE id=\""+memClan.user+"\" LIMIT 1;"); red.first();
-                
-                JSONObject jobj = (JSONObject)JSONValue.parse(red.getString("NV"+nv));
-                int lever = ((Long)jobj.get("lever")).intValue();
-                int xp = ((Long)jobj.get("xp")).intValue();
-                xp -= (lever)*(lever-1)*500;
-                
+                red = SQLManager.stat
+                        .executeQuery("SELECT NV" + nv + " FROM armymem WHERE id=\"" + memClan.user + "\" LIMIT 1;");
+                red.first();
+
+                JSONObject jobj = (JSONObject) JSONValue.parse(red.getString("NV" + nv));
+                int lever = ((Long) jobj.get("lever")).intValue();
+                int xp = ((Long) jobj.get("xp")).intValue();
+                xp -= (lever) * (lever - 1) * 500;
+
                 ds.writeByte(lever); // lever
 
-                ds.writeByte((byte)(xp/lever/10)); // % lever
+                ds.writeByte((byte) (xp / lever / 10)); // % lever
 
-                ds.writeByte(i+1); // số thứ tự thành viên
+                ds.writeByte(i + 1); // số thứ tự thành viên
 
-                ds.writeInt(memClan.cup); //cúp
+                ds.writeInt(memClan.cup); // cúp
 
-                for(int j=0; j<5; j++) {
-                    if(User.nvEquipDefault[nv-1][j] != null)
-                        ds.writeShort(User.nvEquipDefault[nv-1][j].id);
+                for (int j = 0; j < 5; j++) {
+                    if (User.nvEquipDefault[nv - 1][j] != null)
+                        ds.writeShort(User.nvEquipDefault[nv - 1][j].id);
                     else
                         ds.writeShort(-1);
                 }
-                
+
                 if (memClan.xu > 0 && memClan.luong > 0)
-                    ds.writeUTF("Đã đóng góp " + memClan.xu + " xu và " + memClan.luong + " lượng"); // Góp 999 lượng 1 ngày trước
+                    ds.writeUTF("Đã đóng góp " + memClan.xu + " xu và " + memClan.luong + " lượng");
+                // Góp 999 lượng 1 ngày trước
                 else
                     ds.writeUTF("Chưa đóng góp");
                 ds.writeUTF(""); // 88 lần: 0 xu và 9999 lượng
-                
+
                 red.close();
 
             }
-            
+
             ClanManager.member.clear();
-        
-        } catch(SQLException e) {
+
+        } catch (SQLException e) {
             e.printStackTrace();
         }
-        
-        
-        
-        
+
         ds.flush();
         us.sendMessage(ms);
     }
-
 
     public synchronized void updateItem(byte id, int numb) throws IOException {
         this.item[id] += numb;
@@ -501,8 +508,9 @@ public void getMemberTeamMessage(User us, Message ms) throws IOException {
             this.item[id] = (byte) ServerManager.max_item;
         }
     }
+
     public synchronized void AddItem(byte id, int numb) throws IOException {
-        
+
         Message ms = new Message(110);
         DataOutputStream ds = ms.writer();
         ds.writeInt(id);
@@ -571,7 +579,7 @@ public void getMemberTeamMessage(User us, Message ms) throws IOException {
             }
             Calendar calendar = Calendar.getInstance();
             int hours = calendar.get(Calendar.HOUR_OF_DAY);
-            if(hours >= 19 && hours <= 23) // X2 Exp từ 7h tối tới 11h tối
+            if (hours >= 19 && hours <= 23) // X2 Exp từ 7h tối tới 11h tối
             {
                 addXP *= 2;
             }
@@ -819,7 +827,7 @@ public void getMemberTeamMessage(User us, Message ms) throws IOException {
             User.ruongDoItemEntry rdiE = this.ruongDoItem.get(i);
             // Id
             ds.writeByte(rdiE.entry.id);
-            // Numb 
+            // Numb
             ds.writeShort(rdiE.numb);
             // Name
             ds.writeUTF(rdiE.entry.name);
@@ -860,398 +868,401 @@ public void getMemberTeamMessage(User us, Message ms) throws IOException {
     }
 
     protected static User login(ClientEntry cl, String user, String pass) {
-        
+
         try {
             Calendar calendar = Calendar.getInstance();
             int hours = calendar.get(Calendar.HOUR_OF_DAY);
             int minutes = calendar.get(Calendar.MINUTE);
-            if(hours == 5 && minutes < 30) // Bảo trì
+            if (hours == 5 && minutes < 30) // Bảo trì
             {
-                Message ms = new Message(4);
-                    DataOutputStream ds = ms.writer();
-                    ds.writeUTF("Server đang bảo trì, mời bạn quay lại sau 5h30");
-                    ds.flush();
-                    cl.sendMessage(ms);
-                    Thread.sleep(10000);
-                    cl.close();
-            }
-            if (UserOnline > ServerManager.max_clients) {
-                    Message ms = new Message(4);
-                    DataOutputStream ds = ms.writer();
-                    ds.writeUTF("Server đang quá tải, mời bạn quay lại sau");
-                    ds.flush();
-                    cl.sendMessage(ms);
-                    Thread.sleep(10000);
-                    cl.close();
-                }else
-            {
-            User us = new User(cl);
-			
-			pass = md5.MD5(pass);
-
-            ResultSet red = SQLManager.stat.executeQuery("SELECT * FROM user WHERE user = '" + user + "' AND password = '" + pass + "' LIMIT 1 ");
-            if ((red != null) && red.first()) {
-                //  id user
-                us.iddb = red.getInt("user_id");
-                us.report = red.getString("report");
-                us.username = user;
-                boolean lock = red.getBoolean("lock");
-				String lock_time = red.getString("lock_time");
-                boolean active = red.getBoolean("active");
-				boolean passcode;
-				int passcode_tmp;
-				try {
-					passcode_tmp = (red.getString("mabaomat")).length();
-					System.out.println(passcode_tmp);
-					passcode = true;
-				} catch (Exception e) {
-					passcode = false;
-				}
-                //int usemod = red.getInt("usemod");
-                red.close();
-                /*if (usemod > 10) {
-                    Message ms = new Message(4);
-                    DataOutputStream ds = ms.writer();
-                    ds.writeUTF("Khoá Vĩnh Viễn! Lí do cố tình đăng nhập bản Mod quá 10 lần!");
-                    ds.flush();
-                    cl.sendMessage(ms);
-                    Thread.sleep(10000);
-                    cl.close();
-                } else
-                if (vs.indexOf("PuaruVN") == -1) {
-                    Message ms = new Message(4);
-                    DataOutputStream ds = ms.writer();
-                    ds.writeUTF("Chỉ có thể sử dụng phiên bản tải từ trang chủ");
-                    SQLManager.stat.executeUpdate("UPDATE `user` SET `report`='mod', `usemod` = `usemod` + 1 WHERE `user_id`=" + us.iddb + " LIMIT 1;");
-                    ds.flush();
-                    cl.sendMessage(ms);
-                    Thread.sleep(10000);
-                    cl.close();
-                }else*/
-
-                /*if (!passcode) {
-                    Message ms = new Message(4);
-                    DataOutputStream ds = ms.writer();
-                    ds.writeUTF(String.format(GameString.userLoginPassCode(), us.username, lock_time, us.report));
-                    ds.flush();
-                    cl.sendMessage(ms);
-                    TimeUnit.SECONDS.sleep(5);
-                }*/
-                if (lock) {
-                    Message ms = new Message(4);
-                    DataOutputStream ds = ms.writer();
-                    ds.writeUTF(String.format(GameString.userLoginLock(), us.username, us.report));
-                    ds.flush();
-                    cl.sendMessage(ms);
-                    Thread.sleep(10000);
-                    cl.close();
-                } else if (!active) {
-                    Message ms = new Message(4);
-                    DataOutputStream ds = ms.writer();
-                    ds.writeUTF(String.format(GameString.userLoginActive(), us.username, us.iddb));
-                    ds.flush();
-                    cl.sendMessage(ms);
-                    Thread.sleep(10000);
-                    cl.close();
-                } else {
-                    // Get user detals
-                    
-                    User.UserOnline++;
-                    red = SQLManager.stat.executeQuery("SELECT * FROM `armymem` WHERE id='" + us.iddb + "' LIMIT 1;");
-                    red.first();
-                    Message ms;
-                    DataOutputStream ds;
-                    boolean login = red.getBoolean("online");
-                    int idApp = red.getInt("idapp");
-                    if (login) {
-                        User us1 = ServerManager.getUser(us.iddb);
-                        if (us1 != null) {
-                            ms = new Message(10);
-                            ds = ms.writer();
-                            ds.writeUTF(GameString.userLoginMany());
-                            ds.flush();
-                            us1.sendMessage(ms);
-                            Thread.sleep(3000);
-                            us1.client.close();
-                        }
-                        // Set online
-                        SQLManager.stat.executeUpdate("UPDATE `armymem` SET `online`=0, `idapp`=-1 WHERE `id`=" + us.iddb + " LIMIT 1;");
-                        ms = new Message(4);
-                        ds = ms.writer();
-                        ds.writeUTF(GameString.loginErr1());
-                        ds.flush();
-                        cl.sendMessage(ms);
-                        return null;
-                    }
-
-                    // Send message login OK
-                    ms = new Message(3);
-                    ds = ms.writer();
-                    // iddb
-                    ds.writeInt(us.iddb);
-                    // xu
-                    ds.writeInt(us.xu = red.getInt("xu"));
-                    // luong
-                    ds.writeInt(us.luong = red.getInt("luong"));
-                    // dvong
-                    us.dvong = red.getInt("dvong");
-                    // nhan vat
-                    ds.writeByte(us.nv = (byte) (red.getByte("NVused") - 1));
-                    // clan id
-                    ds.writeShort(us.clan = red.getShort("clan"));
-                    // x2 xp time
-                    us.xpX2Time = Until.getDate(red.getString("x2XPTime"));
-                    // null byte
-                    ds.writeByte(0);
-
-                    int i, j, len = NVData.entrys.size();
-                    us.nvStt = new boolean[len];
-                    us.lever = new int[len];
-                    us.leverPercen = new byte[len];
-                    us.xp = new int[len];
-                    us.point = new short[len];
-                    us.pointAdd = new short[len][5];
-                    us.NvData = new int[len][6];
-                    us.nvEquip = new ruongDoTBEntry[len][6];
-                    // Ruong Do
-                    JSONArray jarr1 = (JSONArray) JSONValue.parse(red.getString("ruongTrangBi"));
-                    if (jarr1 != null) {
-                        for (i = 0; i < jarr1.size(); i++) {
-                            JSONObject jobj1 = (JSONObject) jarr1.get(i);
-                            ruongDoTBEntry rdtbEntry = new ruongDoTBEntry();
-                            int nvId = ((Long) jobj1.get("nvId")).intValue();
-                            int equipType = ((Long) jobj1.get("equipType")).intValue();
-                            int equipId = ((Long) jobj1.get("id")).intValue();
-
-                            rdtbEntry.index = i;
-                            rdtbEntry.entry = NVData.getEquipEntryById(nvId, equipType, equipId);
-                            rdtbEntry.dayBuy = Until.getDate((String) jobj1.get("dayBuy"));
-                            rdtbEntry.vipLevel = ((Long) jobj1.get("vipLevel")).byteValue();
-                            rdtbEntry.isUse = (Boolean) jobj1.get("isUse");
-                            rdtbEntry.invAdd = new short[5];
-                            rdtbEntry.percenAdd = new short[5];
-                            rdtbEntry.slot = new int[3];
-                            rdtbEntry.slotNull = 0;
-                            JSONArray jarr2 = (JSONArray) jobj1.get("invAdd");
-                            for (int l = 0; l < 5; l++) {
-                                rdtbEntry.invAdd[l] = ((Long) jarr2.get(l)).shortValue();
-                            }
-                            jarr2 = (JSONArray) jobj1.get("percenAdd");
-                            for (int l = 0; l < 5; l++) {
-                                rdtbEntry.percenAdd[l] = ((Long) jarr2.get(l)).shortValue();
-                            }
-                            jarr2 = (JSONArray) jobj1.get("slot");
-                            for (int l = 0; l < 3; l++) {
-                                rdtbEntry.slot[l] = ((Long) jarr2.get(l)).shortValue();
-                                if (rdtbEntry.slot[l] == -1) {
-                                    rdtbEntry.slotNull++;
-                                }
-                            }
-                            us.ruongDoTB.add(rdtbEntry);
-                        }
-                    }
-                    jarr1 = (JSONArray) JSONValue.parse(red.getString("ruongItem"));
-                    if (jarr1 != null) {
-                        for (i = 0; i < jarr1.size(); i++) {
-                            JSONObject jobj1 = (JSONObject) jarr1.get(i);
-                            ruongDoItemEntry rdiEntry = new ruongDoItemEntry();
-                            //rdiEntry.entry = SpecialItemData.getSpecialItemById(((Long) jobj1.get("id")).intValue());
-							rdiEntry.entry = SpecialItemData.getSpecialItemById(Integer.parseInt(jobj1.get("id").toString()));
-                            //rdiEntry.numb = ((Long) jobj1.get("numb")).intValue();
-							rdiEntry.numb = Integer.parseInt(jobj1.get("numb").toString());
-                            us.ruongDoItem.add(rdiEntry);
-                        }
-                    }
-
-                    for (i = 0; i < len; i++) {
-                        JSONObject jobj = (JSONObject) JSONValue.parse(red.getString("NV" + (i + 1)));
-                        /* lever */
-
-                        us.lever[i] = Integer.parseInt(jobj.get("lever").toString());
-//                            ((Long)jobj.get("lever")).intValue();
-                        /* xp % */
-                        us.xp[i] = Integer.parseInt(jobj.get("xp").toString());
-                        /* lever % */
-                        us.leverPercen[i] = (byte) ((us.xp[i] - (us.lever[i] * (us.lever[i] - 1) * 500)) / us.lever[i] / 10);
-                        /* point */
-                        us.point[i] = Short.parseShort(jobj.get("point").toString());
-//                    ((Short)jobj.get("point")).shortValue();
-                        /* pointAdd */
-                        JSONArray jarr = (JSONArray) jobj.get("pointAdd");
-                        for (j = 0; j < 5; j++) {
-                            us.pointAdd[i][j] = Short.parseShort(jarr.get(j).toString());
-                        }
-//                                ((Long)jarr.get(j)).shortValue();
-                        /* data nhan vat */
-                        jarr = (JSONArray) jobj.get("data");
-                        us.NvData[i][5] = Integer.parseInt(jarr.get(5).toString());
-                        if (us.NvData[i][5] > 0 && us.NvData[i][j] >= 0 && us.NvData[i][j] < us.ruongDoTB.size()) {
-                            us.nvEquip[i][5] = us.ruongDoTB.get(us.NvData[i][j]);
-                            ds.writeBoolean(true);
-                            ds.writeShort(us.nvEquip[i][5].entry.id + 2);
-                            ds.writeShort(us.nvEquip[i][5].entry.id);
-                            ds.writeShort(us.nvEquip[i][5].entry.id + 1);
-                            ds.writeShort(-1);
-                            ds.writeShort(-1);
-                        } else {
-                            ds.writeBoolean(false);
-                        }
-                        for (j = 0; j < 5; j++) {
-                            us.NvData[i][j] = Integer.parseInt(jarr.get(j).toString());
-                            if (us.NvData[i][j] >= 0 && us.NvData[i][j] < us.ruongDoTB.size()) {
-                                ruongDoTBEntry rdE = us.ruongDoTB.get(us.NvData[i][j]);
-                                if (rdE.entry.hanSD - Until.getNumDay(rdE.dayBuy, new Date()) > 0) {
-                                    us.nvEquip[i][j] = rdE;
-                                } else {
-                                    rdE.isUse = false;
-                                }
-                            }
-                            if (us.nvEquip[i][j] != null) {
-                                ds.writeShort(us.nvEquip[i][j].entry.id);
-                            } else if (nvEquipDefault[i][j] != null) {
-                                ds.writeShort(nvEquipDefault[i][j].id);
-                            } else {
-                                ds.writeShort(-1);
-                            }
-                        }
-                    }
-                    // Item
-                    JSONArray jarr = (JSONArray) JSONValue.parse(red.getString("item"));
-                    us.item = new byte[jarr.size()];
-                    for (i = 0; i < jarr.size(); i++) {
-                        if (i < 2) {
-                            us.item[i] = 99;
-                        } else {
-                            us.item[i] = ((Long) jarr.get(i)).byteValue();
-                        }
-                        // So luong
-                        ds.writeByte(us.item[i]);
-                        // Lay item entry
-                        ItemEntry itemEntry = ItemData.entrys.get(i);
-                        // Gia xu
-                        ds.writeInt(itemEntry.buyXu);
-                        // Gia luong
-                        ds.writeInt(itemEntry.buyLuong);
-                    }
-                    // Nv stt va gia mua
-                    int nvstt = red.getInt("sttnhanvat");
-                    for (i = 0; i < 10; i++) {
-                        us.nvStt[i] = (nvstt & 1) > 0;
-                        if (i > 2) {
-                            ds.writeByte(us.nvStt[i] ? 1 : 0);
-                            NVEntry nvEntry = NVData.entrys.get(i);
-                            ds.writeShort(nvEntry.buyXu / 1000);
-                            ds.writeShort(nvEntry.buyLuong);
-                        }
-                        nvstt = nvstt / 2;
-                    }
-                    // Thong tin them
-                    ds.writeUTF(ServerManager.addInfo);
-                    // Dia chi cua About me
-                    ds.writeUTF(ServerManager.addInfoURL);
-                    // Dia chi dang ki doi
-                    ds.writeUTF(ServerManager.regTeamURL);
-                    ds.flush();
-                    cl.sendMessage(ms);
-                    // Mission
-                    jarr = (JSONArray) JSONValue.parse(red.getString("mission"));
-                    us.mission = new int[jarr.size()];
-                    for (i = 0; i < jarr.size(); i++) {
-                        us.mission[i] = ((Long) jarr.get(i)).intValue();
-                    }
-                    jarr = (JSONArray) JSONValue.parse(red.getString("missionLevel"));
-                    us.missionLevel = new byte[jarr.size()];
-                    for (i = 0; i < jarr.size(); i++) {
-                        us.missionLevel[i] = ((Long) jarr.get(i)).byteValue();
-                    }
-                    Date lastLogin = Until.getDate(red.getString("lastOnline"));
-                    // Neu ko online hon 1 ngay -> gui item ngay
-                    if (Until.getNumDay(lastLogin, new Date()) >= 1) {
-                        byte idItem = (byte) (Until.nextInt(ItemData.entrys.size() - 2) + 2);
-                        int numItem = (new int[]{1, 3, 5})[Until.nextInt(new int[]{500, 300, 200})];
-                        us.updateItem(idItem, numItem);
-                        us.sendMSSToUser(null, String.format(GameString.dailyReward(), numItem, ItemData.entrys.get(idItem).name));
-                        us.updateMission(16, 1);
-                    }
-                    us.canChat = Until.getDate(red.getString("canChat"));
-                    us.username = user;
-                    red.close();
-                    // Set online
-                    SQLManager.stat.executeUpdate("UPDATE `armymem` SET `online`=1, `idapp`=" + cl.id + " WHERE `id`=" + us.iddb + " LIMIT 1;");
-                    // Luyen tap manager
-                    us.luyentap = new FightManager(us, ServerManager.ltapMap);
-                    // login true -> dua vao wait
-                    ServerManager.enterWait(us);
-                    // send news notification
-                   /* ms = new Message(46);
-                    ds = ms.writer();
-                    ds.writeUTF(String.format(GameString.newsNoti(), us.username));
-                    ds.flush();
-                    cl.sendMessage(ms);*/
-                    Calendar calendar2 = Calendar.getInstance();
-            int hourss = calendar2.get(Calendar.HOUR_OF_DAY);
-            if(hourss >= 19 && hourss <= 23) // X2 Exp từ 7h tối tới 11h tối
-            {
-                ms = new Message(46);
-                    ds = ms.writer();
-                    ds.writeUTF(String.format("Server x2 Exp vào 19h đến hết 23h hằng ngày!", us.username));
-                    ds.flush();
-                    cl.sendMessage(ms);
-            }
-                    // send news event
-                    ms = new Message(46);
-                    ds = ms.writer();
-                    ds.writeUTF(String.format("Tài khoản mới sau khi đăng nhập vào Rương để mở Rương Kho Báu nhận ngay 10 triệu xu và 5k lượng", us.username));
-                    ds.flush();
-                    cl.sendMessage(ms);
-                    //noti update
-                    /*ms = new Message(46);
-                    ds = ms.writer();
-                    ds.writeUTF(String.format(GameString.newsUpdate(), us.iddb));
-                    ds.flush();
-                    cl.sendMessage(ms);*/
-                    // Server tự động bảo trì vào khung giờ chuẩn: 1h 2h 3h 4h ... các bạn sắp sếp thời gian chơi hợp lí nhé!
-                    // get thong bao web
-                    /*red = SQLManager.stat.executeQuery("SELECT * FROM `cms` WHERE `name`='newbaotri' "); 
-                    red.first();
-                    us.notibaotri = red.getString("content");
-                    red.close();    
-                    ms = new Message(46);
-                    ds = ms.writer();
-                    ds.writeUTF(String.format(GameString.newsBaoTri(), us.notibaotri, us.iddb));
-                    ds.flush();
-                    cl.sendMessage(ms);*/
-                    // send notification event
-                   /* red = SQLManager.stat.executeQuery("SELECT * FROM `cms` WHERE `name`='ingame' ");
-                    red.first();
-                    us.notievent = red.getString("content");
-                    red.close();
-                    ms = new Message(45);
-                    ds = ms.writer();
-                    ds.writeUTF(String.format(GameString.newEvents(), us.notievent));
-                    ds.flush();
-                    cl.sendMessage(ms);*/
-                    TimeUnit.SECONDS.sleep(5);
-                    return us;
-
-                }
-            } else {
-                // Khong ton tai user
                 Message ms = new Message(4);
                 DataOutputStream ds = ms.writer();
-                ds.writeUTF(GameString.loginPassFail());
+                ds.writeUTF("Server đang bảo trì, mời bạn quay lại sau 5h30");
                 ds.flush();
                 cl.sendMessage(ms);
-
-                ms = new Message(46);
-                ds = ms.writer();
-                ds.writeUTF("Đăng nhập thất bại, vui lòng kiểm tra mật khẩu và tài khoản!");
-                ds.flush();
-                cl.sendMessage(ms);
-
                 Thread.sleep(10000);
                 cl.close();
             }
+            if (UserOnline > ServerManager.max_clients) {
+                Message ms = new Message(4);
+                DataOutputStream ds = ms.writer();
+                ds.writeUTF("Server đang quá tải, mời bạn quay lại sau");
+                ds.flush();
+                cl.sendMessage(ms);
+                Thread.sleep(10000);
+                cl.close();
+            } else {
+                User us = new User(cl);
+
+                pass = md5.MD5(pass);
+
+                ResultSet red = SQLManager.stat.executeQuery(
+                        "SELECT * FROM user WHERE user = '" + user + "' AND password = '" + pass + "' LIMIT 1 ");
+                if ((red != null) && red.first()) {
+                    // id user
+                    us.iddb = red.getInt("user_id");
+                    us.report = red.getString("report");
+                    us.username = user;
+                    boolean lock = red.getBoolean("lock");
+                    String lock_time = red.getString("lock_time");
+                    boolean active = red.getBoolean("active");
+                    boolean passcode;
+                    int passcode_tmp;
+                    try {
+                        passcode_tmp = (red.getString("mabaomat")).length();
+                        System.out.println(passcode_tmp);
+                        passcode = true;
+                    } catch (Exception e) {
+                        passcode = false;
+                    }
+                    // int usemod = red.getInt("usemod");
+                    red.close();
+                    /*
+                     * if (usemod > 10) { Message ms = new Message(4); DataOutputStream ds =
+                     * ms.writer();
+                     * ds.writeUTF("Khoá Vĩnh Viễn! Lí do cố tình đăng nhập bản Mod quá 10 lần!");
+                     * ds.flush(); cl.sendMessage(ms); Thread.sleep(10000); cl.close(); } else
+                     */
+
+                    /*
+                     * if (vs.indexOf("PuaruVN") == -1) { Message ms = new Message(4);
+                     * DataOutputStream ds = ms.writer();
+                     * ds.writeUTF("Chỉ có thể sử dụng phiên bản tải từ trang chủ");
+                     * SQLManager.stat.
+                     * executeUpdate("UPDATE `user` SET `report`='mod', `usemod` = `usemod` + 1 WHERE `user_id`="
+                     * + us.iddb + " LIMIT 1;"); ds.flush(); cl.sendMessage(ms);
+                     * Thread.sleep(10000); cl.close(); }else
+                     */
+
+                    /*
+                     * if (!passcode) { Message ms = new Message(4); DataOutputStream ds =
+                     * ms.writer(); ds.writeUTF(String.format(GameString.userLoginPassCode(),
+                     * us.username, lock_time, us.report)); ds.flush(); cl.sendMessage(ms);
+                     * TimeUnit.SECONDS.sleep(5); }
+                     */
+                    if (lock) {
+                        Message ms = new Message(4);
+                        DataOutputStream ds = ms.writer();
+                        ds.writeUTF(String.format(GameString.userLoginLock(), us.username, us.report));
+                        ds.flush();
+                        cl.sendMessage(ms);
+                        Thread.sleep(10000);
+                        cl.close();
+                    } else if (!active) {
+                        Message ms = new Message(4);
+                        DataOutputStream ds = ms.writer();
+                        ds.writeUTF(String.format(GameString.userLoginActive(), us.username, us.iddb));
+                        ds.flush();
+                        cl.sendMessage(ms);
+                        Thread.sleep(10000);
+                        cl.close();
+                    } else {
+                        // Get user detals
+
+                        User.UserOnline++;
+                        red = SQLManager.stat
+                                .executeQuery("SELECT * FROM `armymem` WHERE id='" + us.iddb + "' LIMIT 1;");
+                        red.first();
+                        Message ms;
+                        DataOutputStream ds;
+                        boolean login = red.getBoolean("online");
+                        int idApp = red.getInt("idapp");
+                        if (login) {
+                            User us1 = ServerManager.getUser(us.iddb);
+                            if (us1 != null) {
+                                ms = new Message(10);
+                                ds = ms.writer();
+                                ds.writeUTF(GameString.userLoginMany());
+                                ds.flush();
+                                us1.sendMessage(ms);
+                                Thread.sleep(3000);
+                                us1.client.close();
+                            }
+                            // Set online
+                            SQLManager.stat.executeUpdate(
+                                    "UPDATE `armymem` SET `online`=0, `idapp`=-1 WHERE `id`=" + us.iddb + " LIMIT 1;");
+                            ms = new Message(4);
+                            ds = ms.writer();
+                            ds.writeUTF(GameString.loginErr1());
+                            ds.flush();
+                            cl.sendMessage(ms);
+                            return null;
+                        }
+
+                        // Send message login OK
+                        ms = new Message(3);
+                        ds = ms.writer();
+                        // iddb
+                        ds.writeInt(us.iddb);
+                        // xu
+                        ds.writeInt(us.xu = red.getInt("xu"));
+                        // luong
+                        ds.writeInt(us.luong = red.getInt("luong"));
+                        // dvong
+                        us.dvong = red.getInt("dvong");
+                        // nhan vat
+                        ds.writeByte(us.nv = (byte) (red.getByte("NVused") - 1));
+                        // clan id
+                        ds.writeShort(us.clan = red.getShort("clan"));
+                        // x2 xp time
+                        us.xpX2Time = Until.getDate(red.getString("x2XPTime"));
+                        // null byte
+                        ds.writeByte(0);
+
+                        int i, j, len = NVData.entrys.size();
+                        us.nvStt = new boolean[len];
+                        us.lever = new int[len];
+                        us.leverPercen = new byte[len];
+                        us.xp = new int[len];
+                        us.point = new short[len];
+                        us.pointAdd = new short[len][5];
+                        us.NvData = new int[len][6];
+                        us.nvEquip = new ruongDoTBEntry[len][6];
+                        // Ruong Do
+                        JSONArray jarr1 = (JSONArray) JSONValue.parse(red.getString("ruongTrangBi"));
+                        if (jarr1 != null) {
+                            for (i = 0; i < jarr1.size(); i++) {
+                                JSONObject jobj1 = (JSONObject) jarr1.get(i);
+                                ruongDoTBEntry rdtbEntry = new ruongDoTBEntry();
+                                int nvId = ((Long) jobj1.get("nvId")).intValue();
+                                int equipType = ((Long) jobj1.get("equipType")).intValue();
+                                int equipId = ((Long) jobj1.get("id")).intValue();
+
+                                rdtbEntry.index = i;
+                                rdtbEntry.entry = NVData.getEquipEntryById(nvId, equipType, equipId);
+                                rdtbEntry.dayBuy = Until.getDate((String) jobj1.get("dayBuy"));
+                                rdtbEntry.vipLevel = ((Long) jobj1.get("vipLevel")).byteValue();
+                                rdtbEntry.isUse = (Boolean) jobj1.get("isUse");
+                                rdtbEntry.invAdd = new short[5];
+                                rdtbEntry.percenAdd = new short[5];
+                                rdtbEntry.slot = new int[3];
+                                rdtbEntry.slotNull = 0;
+                                JSONArray jarr2 = (JSONArray) jobj1.get("invAdd");
+                                for (int l = 0; l < 5; l++) {
+                                    rdtbEntry.invAdd[l] = ((Long) jarr2.get(l)).shortValue();
+                                }
+                                jarr2 = (JSONArray) jobj1.get("percenAdd");
+                                for (int l = 0; l < 5; l++) {
+                                    rdtbEntry.percenAdd[l] = ((Long) jarr2.get(l)).shortValue();
+                                }
+                                jarr2 = (JSONArray) jobj1.get("slot");
+                                for (int l = 0; l < 3; l++) {
+                                    rdtbEntry.slot[l] = ((Long) jarr2.get(l)).shortValue();
+                                    if (rdtbEntry.slot[l] == -1) {
+                                        rdtbEntry.slotNull++;
+                                    }
+                                }
+                                us.ruongDoTB.add(rdtbEntry);
+                            }
+                        }
+                        jarr1 = (JSONArray) JSONValue.parse(red.getString("ruongItem"));
+                        if (jarr1 != null) {
+                            for (i = 0; i < jarr1.size(); i++) {
+                                JSONObject jobj1 = (JSONObject) jarr1.get(i);
+                                ruongDoItemEntry rdiEntry = new ruongDoItemEntry();
+                                // rdiEntry.entry = SpecialItemData.getSpecialItemById(((Long)
+                                // jobj1.get("id")).intValue());
+                                rdiEntry.entry = SpecialItemData
+                                        .getSpecialItemById(Integer.parseInt(jobj1.get("id").toString()));
+                                // rdiEntry.numb = ((Long) jobj1.get("numb")).intValue();
+                                rdiEntry.numb = Integer.parseInt(jobj1.get("numb").toString());
+                                us.ruongDoItem.add(rdiEntry);
+                            }
+                        }
+
+                        for (i = 0; i < len; i++) {
+                            JSONObject jobj = (JSONObject) JSONValue.parse(red.getString("NV" + (i + 1)));
+                            /* lever */
+
+                            us.lever[i] = Integer.parseInt(jobj.get("lever").toString());
+                            // ((Long)jobj.get("lever")).intValue();
+                            /* xp % */
+                            us.xp[i] = Integer.parseInt(jobj.get("xp").toString());
+                            /* lever % */
+                            us.leverPercen[i] = (byte) ((us.xp[i] - (us.lever[i] * (us.lever[i] - 1) * 500))
+                                    / us.lever[i] / 10);
+                            /* point */
+                            us.point[i] = Short.parseShort(jobj.get("point").toString());
+                            // ((Short)jobj.get("point")).shortValue();
+                            /* pointAdd */
+                            JSONArray jarr = (JSONArray) jobj.get("pointAdd");
+                            for (j = 0; j < 5; j++) {
+                                us.pointAdd[i][j] = Short.parseShort(jarr.get(j).toString());
+                            }
+                            // ((Long)jarr.get(j)).shortValue();
+                            /* data nhan vat */
+                            jarr = (JSONArray) jobj.get("data");
+                            us.NvData[i][5] = Integer.parseInt(jarr.get(5).toString());
+                            if (us.NvData[i][5] > 0 && us.NvData[i][j] >= 0 && us.NvData[i][j] < us.ruongDoTB.size()) {
+                                us.nvEquip[i][5] = us.ruongDoTB.get(us.NvData[i][j]);
+                                ds.writeBoolean(true);
+                                ds.writeShort(us.nvEquip[i][5].entry.id + 2);
+                                ds.writeShort(us.nvEquip[i][5].entry.id);
+                                ds.writeShort(us.nvEquip[i][5].entry.id + 1);
+                                ds.writeShort(-1);
+                                ds.writeShort(-1);
+                            } else {
+                                ds.writeBoolean(false);
+                            }
+                            for (j = 0; j < 5; j++) {
+                                us.NvData[i][j] = Integer.parseInt(jarr.get(j).toString());
+                                if (us.NvData[i][j] >= 0 && us.NvData[i][j] < us.ruongDoTB.size()) {
+                                    ruongDoTBEntry rdE = us.ruongDoTB.get(us.NvData[i][j]);
+                                    if (rdE.entry.hanSD - Until.getNumDay(rdE.dayBuy, new Date()) > 0) {
+                                        us.nvEquip[i][j] = rdE;
+                                    } else {
+                                        rdE.isUse = false;
+                                    }
+                                }
+                                if (us.nvEquip[i][j] != null) {
+                                    ds.writeShort(us.nvEquip[i][j].entry.id);
+                                } else if (nvEquipDefault[i][j] != null) {
+                                    ds.writeShort(nvEquipDefault[i][j].id);
+                                } else {
+                                    ds.writeShort(-1);
+                                }
+                            }
+                        }
+                        // Item
+                        JSONArray jarr = (JSONArray) JSONValue.parse(red.getString("item"));
+                        us.item = new byte[jarr.size()];
+                        for (i = 0; i < jarr.size(); i++) {
+                            if (i < 2) {
+                                us.item[i] = 99;
+                            } else {
+                                us.item[i] = ((Long) jarr.get(i)).byteValue();
+                            }
+                            // So luong
+                            ds.writeByte(us.item[i]);
+                            // Lay item entry
+                            ItemEntry itemEntry = ItemData.entrys.get(i);
+                            // Gia xu
+                            ds.writeInt(itemEntry.buyXu);
+                            // Gia luong
+                            ds.writeInt(itemEntry.buyLuong);
+                        }
+                        // Nv stt va gia mua
+                        int nvstt = red.getInt("sttnhanvat");
+                        for (i = 0; i < 10; i++) {
+                            us.nvStt[i] = (nvstt & 1) > 0;
+                            if (i > 2) {
+                                ds.writeByte(us.nvStt[i] ? 1 : 0);
+                                NVEntry nvEntry = NVData.entrys.get(i);
+                                ds.writeShort(nvEntry.buyXu / 1000);
+                                ds.writeShort(nvEntry.buyLuong);
+                            }
+                            nvstt = nvstt / 2;
+                        }
+                        // Thong tin them
+                        ds.writeUTF(ServerManager.addInfo);
+                        // Dia chi cua About me
+                        ds.writeUTF(ServerManager.addInfoURL);
+                        // Dia chi dang ki doi
+                        ds.writeUTF(ServerManager.regTeamURL);
+                        ds.flush();
+                        cl.sendMessage(ms);
+                        // Mission
+                        jarr = (JSONArray) JSONValue.parse(red.getString("mission"));
+                        us.mission = new int[jarr.size()];
+                        for (i = 0; i < jarr.size(); i++) {
+                            us.mission[i] = ((Long) jarr.get(i)).intValue();
+                        }
+                        jarr = (JSONArray) JSONValue.parse(red.getString("missionLevel"));
+                        us.missionLevel = new byte[jarr.size()];
+                        for (i = 0; i < jarr.size(); i++) {
+                            us.missionLevel[i] = ((Long) jarr.get(i)).byteValue();
+                        }
+                        Date lastLogin = Until.getDate(red.getString("lastOnline"));
+                        // Neu ko online hon 1 ngay -> gui item ngay
+                        if (Until.getNumDay(lastLogin, new Date()) >= 1) {
+                            byte idItem = (byte) (Until.nextInt(ItemData.entrys.size() - 2) + 2);
+                            int numItem = (new int[] { 1, 3, 5 })[Until.nextInt(new int[] { 500, 300, 200 })];
+                            us.updateItem(idItem, numItem);
+                            us.sendMSSToUser(null,
+                                    String.format(GameString.dailyReward(), numItem, ItemData.entrys.get(idItem).name));
+                            us.updateMission(16, 1);
+                        }
+                        us.canChat = Until.getDate(red.getString("canChat"));
+                        us.username = user;
+                        red.close();
+                        // Set online
+                        SQLManager.stat.executeUpdate("UPDATE `armymem` SET `online`=1, `idapp`=" + cl.id
+                                + " WHERE `id`=" + us.iddb + " LIMIT 1;");
+                        // Luyen tap manager
+                        us.luyentap = new FightManager(us, ServerManager.ltapMap);
+                        // login true -> dua vao wait
+                        ServerManager.enterWait(us);
+                        // send news notification
+                        /*
+                         * ms = new Message(46); ds = ms.writer();
+                         * ds.writeUTF(String.format(GameString.newsNoti(), us.username)); ds.flush();
+                         * cl.sendMessage(ms);
+                         */
+                        Calendar calendar2 = Calendar.getInstance();
+                        int hourss = calendar2.get(Calendar.HOUR_OF_DAY);
+                        if (hourss >= 19 && hourss <= 23) // X2 Exp từ 7h tối tới 11h tối
+                        {
+                            ms = new Message(46);
+                            ds = ms.writer();
+                            ds.writeUTF(String.format("Server x2 Exp vào 19h đến hết 23h hằng ngày!", us.username));
+                            ds.flush();
+                            cl.sendMessage(ms);
+                        }
+                        // send news event
+                        ms = new Message(46);
+                        ds = ms.writer();
+                        ds.writeUTF(String.format(
+                                "Tài khoản mới sau khi đăng nhập vào Rương để mở Rương Kho Báu nhận ngay 10 triệu xu và 5k lượng",
+                                us.username));
+                        ds.flush();
+                        cl.sendMessage(ms);
+                        // noti update
+                        /*
+                         * ms = new Message(46); ds = ms.writer();
+                         * ds.writeUTF(String.format(GameString.newsUpdate(), us.iddb)); ds.flush();
+                         * cl.sendMessage(ms);
+                         */
+                        // Server tự động bảo trì vào khung giờ chuẩn: 1h 2h 3h 4h ... các bạn sắp sếp
+                        // thời gian chơi hợp lí nhé!
+                        // get thong bao web
+                        /*
+                         * red =
+                         * SQLManager.stat.executeQuery("SELECT * FROM `cms` WHERE `name`='newbaotri' "
+                         * ); red.first(); us.notibaotri = red.getString("content"); red.close(); ms =
+                         * new Message(46); ds = ms.writer();
+                         * ds.writeUTF(String.format(GameString.newsBaoTri(), us.notibaotri, us.iddb));
+                         * ds.flush(); cl.sendMessage(ms);
+                         */
+                        // send notification event
+                        /*
+                         * red =
+                         * SQLManager.stat.executeQuery("SELECT * FROM `cms` WHERE `name`='ingame' ");
+                         * red.first(); us.notievent = red.getString("content"); red.close(); ms = new
+                         * Message(45); ds = ms.writer();
+                         * ds.writeUTF(String.format(GameString.newEvents(), us.notievent)); ds.flush();
+                         * cl.sendMessage(ms);
+                         */
+                        TimeUnit.SECONDS.sleep(5);
+                        return us;
+
+                    }
+                } else {
+                    // Khong ton tai user
+                    Message ms = new Message(4);
+                    DataOutputStream ds = ms.writer();
+                    ds.writeUTF(GameString.loginPassFail());
+                    ds.flush();
+                    cl.sendMessage(ms);
+
+                    ms = new Message(46);
+                    ds = ms.writer();
+                    ds.writeUTF("Đăng nhập thất bại, vui lòng kiểm tra mật khẩu và tài khoản!");
+                    ds.flush();
+                    cl.sendMessage(ms);
+
+                    Thread.sleep(10000);
+                    cl.close();
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -1271,69 +1282,60 @@ public void getMemberTeamMessage(User us, Message ms) throws IOException {
     protected static User registry(ClientEntry cl, String user, String pass) {
         try {
             Message ms = new Message(4);
-                DataOutputStream ds = ms.writer();
-                ds.writeUTF("Truy cập http://army.thangberus.net để đăng ký");
-                ds.flush();
-                cl.sendMessage(ms);
+            DataOutputStream ds = ms.writer();
+            ds.writeUTF("Truy cập http://army.thangberus.net để đăng ký");
+            ds.flush();
+            cl.sendMessage(ms);
             /*
-            User us = new User(cl);
-            ResultSet red = SQLManager.stat.executeQuery("SELECT * FROM `user` WHERE user=\"" + user + "\";");
-            if (user.length() < 5) {
-                // Khong du ki tu
-                Message ms = new Message(4);
-                DataOutputStream ds = ms.writer();
-                ds.writeUTF("Tên tài khoản phải có ít nhất 5 kí tự.");
-                ds.flush();
-                cl.sendMessage(ms);
-                red.close();
-            } else if (red != null && red.first()) {
-                // Ton tai user
-                Message ms = new Message(4);
-                DataOutputStream ds = ms.writer();
-                ds.writeUTF("Tài khoản đã tồn tại");
-                ds.flush();
-                cl.sendMessage(ms);
-                red.close();
-
-            } else {
-                red.close();
-                // Tao tai khoan
-                SQLManager.stat.executeUpdate("INSERT INTO user(`user`, `password`, `lock`, `active`,`usemod`,`save`) VALUES ('" + user + "', '" + pass + "', 0,0, 0,0);");
-                red = SQLManager.stat.executeQuery("SELECT `user_id` FROM user WHERE user='" + user + "' LIMIT 1;");
-                red.first();
-                int user_id = red.getInt("user_id");
-                red.close();
-                SQLManager.stat.executeUpdate("INSERT INTO armymem(`id`, `xu`, `luong`) VALUES (" + user_id + ", 10000000, 5000);");
-                //SQLManager.stat.executeUpdate("INSERT INTO users(`name`, `name_lat`, `password`) VALUES (" + user + ", " + user + ", " + md5(md5(pass)) + ");");
-                Message ms = new Message(4);
-                DataOutputStream ds = ms.writer();
-                ds.writeUTF("Tạo tài khoản thành công, mời đăng nhập !");
-                ds.flush();
-                cl.sendMessage(ms);
-            }
-*/
+             * User us = new User(cl); ResultSet red =
+             * SQLManager.stat.executeQuery("SELECT * FROM `user` WHERE user=\"" + user +
+             * "\";"); if (user.length() < 5) { // Khong du ki tu Message ms = new
+             * Message(4); DataOutputStream ds = ms.writer();
+             * ds.writeUTF("Tên tài khoản phải có ít nhất 5 kí tự."); ds.flush();
+             * cl.sendMessage(ms); red.close(); } else if (red != null && red.first()) { //
+             * Ton tai user Message ms = new Message(4); DataOutputStream ds = ms.writer();
+             * ds.writeUTF("Tài khoản đã tồn tại"); ds.flush(); cl.sendMessage(ms);
+             * red.close();
+             * 
+             * } else { red.close(); // Tao tai khoan SQLManager.stat.
+             * executeUpdate("INSERT INTO user(`user`, `password`, `lock`, `active`,`usemod`,`save`) VALUES ('"
+             * + user + "', '" + pass + "', 0,0, 0,0);"); red =
+             * SQLManager.stat.executeQuery("SELECT `user_id` FROM user WHERE user='" + user
+             * + "' LIMIT 1;"); red.first(); int user_id = red.getInt("user_id");
+             * red.close(); SQLManager.stat.
+             * executeUpdate("INSERT INTO armymem(`id`, `xu`, `luong`) VALUES (" + user_id +
+             * ", 10000000, 5000);"); //SQLManager.stat.
+             * executeUpdate("INSERT INTO users(`name`, `name_lat`, `password`) VALUES (" +
+             * user + ", " + user + ", " + md5(md5(pass)) + ");"); Message ms = new
+             * Message(4); DataOutputStream ds = ms.writer();
+             * ds.writeUTF("Tạo tài khoản thành công, mời đăng nhập !"); ds.flush();
+             * cl.sendMessage(ms); }
+             */
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
     }
-public static String md5(String str){
-		String result = "";
-		MessageDigest digest;
-		try {
-			digest = MessageDigest.getInstance("MD5");
-			digest.update(str.getBytes());
-			BigInteger bigInteger = new BigInteger(1,digest.digest());
-			result = bigInteger.toString(16);
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
-		return result;
-	}
+
+    public static String md5(String str) {
+        String result = "";
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("MD5");
+            digest.update(str.getBytes());
+            BigInteger bigInteger = new BigInteger(1, digest.digest());
+            result = bigInteger.toString(16);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
     protected ruongDoTBEntry getEquipNoNgoc(EquipmentEntry eqE, byte level) {
         for (int i = 0; i < this.ruongDoTB.size(); i++) {
             ruongDoTBEntry rdE = this.ruongDoTB.get(i);
-            if (rdE.entry == eqE && !rdE.isUse && rdE.vipLevel == level && rdE.slotNull == 3 && rdE.entry.hanSD - Until.getNumDay(rdE.dayBuy, new Date()) > 0) {
+            if (rdE.entry == eqE && !rdE.isUse && rdE.vipLevel == level && rdE.slotNull == 3
+                    && rdE.entry.hanSD - Until.getNumDay(rdE.dayBuy, new Date()) > 0) {
                 return rdE;
             }
         }
@@ -1351,7 +1353,8 @@ public static String md5(String str){
         return 0;
     }
 
-    public synchronized void updateRuong(ruongDoTBEntry tbUpdate, ruongDoTBEntry addTB, int removeTB, ArrayList<ruongDoItemEntry> addItem, ArrayList<ruongDoItemEntry> removeItem) throws IOException {
+    public synchronized void updateRuong(ruongDoTBEntry tbUpdate, ruongDoTBEntry addTB, int removeTB,
+            ArrayList<ruongDoItemEntry> addItem, ArrayList<ruongDoItemEntry> removeItem) throws IOException {
         Message ms;
         DataOutputStream ds;
         if (addTB != null) {
@@ -1390,7 +1393,7 @@ public static String md5(String str){
                 ruongDoTB.set(bestLocation, addTB);
             }
             ms = new Message(104);
-            
+
             ds = ms.writer();
             ds.writeByte(0);
             ds.writeInt(addTB.index | 0x10000);
@@ -1522,19 +1525,22 @@ public static String md5(String str){
         System.out.println("Xóa cache client : " + client);
         try {
             // Not online
-            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `online`=0,`idapp`=-1,`lastOnline`='" + Until.toDateString(new Date()) + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `online`=0,`idapp`=-1,`lastOnline`='"
+                    + Until.toDateString(new Date()) + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
             JSONArray Jarr1 = new JSONArray();
             for (int i = 0; i < this.item.length; i++) {
                 Jarr1.add(item[i]);
-            }   
-            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `item`='" + Jarr1.toJSONString() + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+            }
+            SQLManager.stat.executeUpdate(
+                    "UPDATE `armymem` SET `item`='" + Jarr1.toJSONString() + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
             byte nvXPMax = -1;
             int xpMax = 0;
             for (int i = 0; i < this.lever.length; i++) {
                 if (!this.nvStt[i]) {
                     continue;
                 }
-                ResultSet red = SQLManager.stat.executeQuery("SELECT `NV" + (i + 1) + "` FROM `armymem` WHERE `id`=" + this.iddb + " LIMIT 1;");
+                ResultSet red = SQLManager.stat.executeQuery(
+                        "SELECT `NV" + (i + 1) + "` FROM `armymem` WHERE `id`=" + this.iddb + " LIMIT 1;");
                 if ((red != null) && (red.first())) {
                     JSONObject nvdata = (JSONObject) JSONValue.parse(red.getString("NV" + (i + 1)));
                     red.close();
@@ -1551,7 +1557,8 @@ public static String md5(String str){
                         Jarr2.add(this.NvData[i][j]);
                     }
                     nvdata.put("data", Jarr2);
-                    SQLManager.stat.executeUpdate("UPDATE `armymem` SET `NV" + (i + 1) + "`='" + nvdata.toJSONString() + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+                    SQLManager.stat.executeUpdate("UPDATE `armymem` SET `NV" + (i + 1) + "`='" + nvdata.toJSONString()
+                            + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
                     if (this.xp[i] > xpMax) {
                         nvXPMax = (byte) (i + 1);
                         xpMax = this.xp[i];
@@ -1588,7 +1595,8 @@ public static String md5(String str){
                 tbEntry.put("slot", Jarr4);
                 Jarr1.add(tbEntry);
             }
-            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `ruongTrangBi`='" + Jarr1.toJSONString() + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `ruongTrangBi`='" + Jarr1.toJSONString()
+                    + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
 
             Jarr1.clear();
             for (ruongDoItemEntry rdiEntry : ruongDoItem) {
@@ -1597,20 +1605,23 @@ public static String md5(String str){
                 tbEntry.put("numb", rdiEntry.numb);
                 Jarr1.add(tbEntry);
             }
-            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `ruongItem`='" + Jarr1.toJSONString() + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `ruongItem`='" + Jarr1.toJSONString() + "' WHERE `id`="
+                    + this.iddb + " LIMIT 1;");
 
             // Mission
             Jarr1.clear();
             for (int i = 0; i < this.mission.length; i++) {
                 Jarr1.add(this.mission[i]);
             }
-            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `mission`='" + Jarr1.toJSONString() + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `mission`='" + Jarr1.toJSONString() + "' WHERE `id`="
+                    + this.iddb + " LIMIT 1;");
 
             Jarr1.clear();
             for (int i = 0; i < this.missionLevel.length; i++) {
                 Jarr1.add(this.missionLevel[i]);
             }
-            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `missionLevel`='" + Jarr1.toJSONString() + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `missionLevel`='" + Jarr1.toJSONString()
+                    + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
 
             int nvstt = 1, pow = 1;
             for (int i = 0; i < this.nvStt.length; i++) {
@@ -1618,7 +1629,10 @@ public static String md5(String str){
                 pow <<= 1;
             }
             // Xu, luong, ...
-            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `xu`='" + this.xu + "',`luong`='" + this.luong + "',`dvong`='" + this.dvong + "',`NVused`='" + (this.nv + 1) + "',`sttnhanvat`='" + nvstt + "',`x2XPTime`='" + Until.toDateString(xpX2Time) + "',`nvXPMax`='" + nvXPMax + "',`xpMax`='" + xpMax + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `xu`='" + this.xu + "',`luong`='" + this.luong
+                    + "',`dvong`='" + this.dvong + "',`NVused`='" + (this.nv + 1) + "',`sttnhanvat`='" + nvstt
+                    + "',`x2XPTime`='" + Until.toDateString(xpX2Time) + "',`nvXPMax`='" + nvXPMax + "',`xpMax`='"
+                    + xpMax + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -1626,7 +1640,7 @@ public static String md5(String str){
     }
 
     public int saveData(User us, Message ms) throws IOException {
-        
+
         System.out.println("Save Data Client : " + client);
         byte action = ms.reader().readByte();
         byte type = 0;
@@ -1636,14 +1650,14 @@ public static String md5(String str){
             id = ms.reader().readByte();
         }
         DataOutputStream ds;
-        
-        ms = new Message(45); 
-        ds = ms.writer();    
-                 ds.writeUTF("Đã lưu dữ liệu!.");
-                 
+
+        ms = new Message(45);
+        ds = ms.writer();
+        ds.writeUTF("Đã lưu dữ liệu!.");
+
         us.sendMessage(ms);
         ds.flush();
-        
+
         try {
             // Not online
 
@@ -1651,14 +1665,16 @@ public static String md5(String str){
             for (int i = 0; i < this.item.length; i++) {
                 Jarr1.add(item[i]);
             }
-            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `item`='" + Jarr1.toJSONString() + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+            SQLManager.stat.executeUpdate(
+                    "UPDATE `armymem` SET `item`='" + Jarr1.toJSONString() + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
             byte nvXPMax = -1;
             int xpMax = 0;
             for (int i = 0; i < this.lever.length; i++) {
                 if (!this.nvStt[i]) {
                     continue;
                 }
-                ResultSet red = SQLManager.stat.executeQuery("SELECT `NV" + (i + 1) + "` FROM `armymem` WHERE `id`=" + this.iddb + " LIMIT 1;");
+                ResultSet red = SQLManager.stat.executeQuery(
+                        "SELECT `NV" + (i + 1) + "` FROM `armymem` WHERE `id`=" + this.iddb + " LIMIT 1;");
                 if ((red != null) && (red.first())) {
                     JSONObject nvdata = (JSONObject) JSONValue.parse(red.getString("NV" + (i + 1)));
                     red.close();
@@ -1675,7 +1691,8 @@ public static String md5(String str){
                         Jarr2.add(this.NvData[i][j]);
                     }
                     nvdata.put("data", Jarr2);
-                    SQLManager.stat.executeUpdate("UPDATE `armymem` SET `NV" + (i + 1) + "`='" + nvdata.toJSONString() + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+                    SQLManager.stat.executeUpdate("UPDATE `armymem` SET `NV" + (i + 1) + "`='" + nvdata.toJSONString()
+                            + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
                     if (this.xp[i] > xpMax) {
                         nvXPMax = (byte) (i + 1);
                         xpMax = this.xp[i];
@@ -1712,7 +1729,8 @@ public static String md5(String str){
                 tbEntry.put("slot", Jarr4);
                 Jarr1.add(tbEntry);
             }
-            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `ruongTrangBi`='" + Jarr1.toJSONString() + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `ruongTrangBi`='" + Jarr1.toJSONString()
+                    + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
 
             Jarr1.clear();
             for (ruongDoItemEntry rdiEntry : ruongDoItem) {
@@ -1721,20 +1739,23 @@ public static String md5(String str){
                 tbEntry.put("numb", rdiEntry.numb);
                 Jarr1.add(tbEntry);
             }
-            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `ruongItem`='" + Jarr1.toJSONString() + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `ruongItem`='" + Jarr1.toJSONString() + "' WHERE `id`="
+                    + this.iddb + " LIMIT 1;");
 
             // Mission
             Jarr1.clear();
             for (int i = 0; i < this.mission.length; i++) {
                 Jarr1.add(this.mission[i]);
             }
-            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `mission`='" + Jarr1.toJSONString() + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `mission`='" + Jarr1.toJSONString() + "' WHERE `id`="
+                    + this.iddb + " LIMIT 1;");
 
             Jarr1.clear();
             for (int i = 0; i < this.missionLevel.length; i++) {
                 Jarr1.add(this.missionLevel[i]);
             }
-            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `missionLevel`='" + Jarr1.toJSONString() + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `missionLevel`='" + Jarr1.toJSONString()
+                    + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
 
             int nvstt = 1, pow = 1;
             for (int i = 0; i < this.nvStt.length; i++) {
@@ -1742,9 +1763,12 @@ public static String md5(String str){
                 pow <<= 1;
             }
             // Xu, luong, ...
-            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `xu`='" + this.xu + "',`luong`='" + (this.luong+10) + "',`dvong`='" + this.dvong + "',`NVused`='" + (this.nv + 1) + "',`sttnhanvat`='" + nvstt + "',`x2XPTime`='" + Until.toDateString(xpX2Time) + "',`nvXPMax`='" + nvXPMax + "',`xpMax`='" + xpMax + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
-                        
-            } catch (SQLException e) {
+            SQLManager.stat.executeUpdate("UPDATE `armymem` SET `xu`='" + this.xu + "',`luong`='" + (this.luong + 10)
+                    + "',`dvong`='" + this.dvong + "',`NVused`='" + (this.nv + 1) + "',`sttnhanvat`='" + nvstt
+                    + "',`x2XPTime`='" + Until.toDateString(xpX2Time) + "',`nvXPMax`='" + nvXPMax + "',`xpMax`='"
+                    + xpMax + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return 0;
@@ -1888,7 +1912,7 @@ public static String md5(String str){
     protected void hopNgocMessage(Message ms) throws IOException {
         DataOutputStream ds;
         byte action = ms.reader().readByte();
-        log("action: "+action);
+        log("action: " + action);
         // Set hop ngoc
         if (action == 0) {
             byte lent = ms.reader().readByte();
@@ -1902,7 +1926,7 @@ public static String md5(String str){
             for (int i = 0; i < lent; i++) {
                 int id = ms.reader().readInt();
                 byte numb = ms.reader().readByte();
-                 
+
                 if ((id & 0x10000) > 0) {
                     id &= 0xFFFF;
                     if (id >= 0 && id < this.ruongDoTB.size() && this.hopNgocTB == null) {
@@ -2058,7 +2082,7 @@ public static String md5(String str){
                         }
                         hopNgocTB.slotNull--;
                         updateRuong(hopNgocTB, null, -1, null, hopNgocItemArray);
-                        
+
                     } else {
                         ms = new Message(45);
                         ds = ms.writer();
@@ -2100,7 +2124,8 @@ public static String md5(String str){
                     } else if (rdE2.entry.id % 10 == 9) {
                         updateMission(11, rdE2.numb);
                     }
-                    ds.writeUTF(String.format(GameString.hopNgocSucess(), rdE1.numb, rdE1.entry.name, rdE2.numb, rdE2.entry.name));
+                    ds.writeUTF(String.format(GameString.hopNgocSucess(), rdE1.numb, rdE1.entry.name, rdE2.numb,
+                            rdE2.entry.name));
                 } else {
                     ds.writeUTF(String.format(GameString.hopNgocFail(), rdE1.numb, rdE1.entry.name));
                 }
@@ -2110,27 +2135,22 @@ public static String md5(String str){
                 ruongDoItemEntry rdE = this.hopNgocItemArray.get(0);
                 rdE.numb = 1;
                 // Phuc hoi diem nang cap
-                //cu
-                /*if (rdE.entry.id == 50) {
-                    this.point[this.nv] = (short) ((this.lever[this.nv] - 1) * 3);
-                    this.pointAdd[this.nv][0] = 0;
-                    this.pointAdd[this.nv][1] = 0;
-                    this.pointAdd[this.nv][2] = 10;
-                    this.pointAdd[this.nv][3] = 10;
-                    this.pointAdd[this.nv][4] = 10;
-                    sendPointAddInfo();
-                    updateRuong(null, null, -1, null, hopNgocItemArray);
-                    ms = new Message(45);
-                    ds = ms.writer();
-                    ds.writeUTF(GameString.phucHoiSuccess());
-                    ds.flush();
-                    sendMessage(ms);
-                }*/
-                                // Phuc hoi diem nang cap
-                                //moi
+                // cu
+                /*
+                 * if (rdE.entry.id == 50) { this.point[this.nv] = (short) ((this.lever[this.nv]
+                 * - 1) * 3); this.pointAdd[this.nv][0] = 0; this.pointAdd[this.nv][1] = 0;
+                 * this.pointAdd[this.nv][2] = 10; this.pointAdd[this.nv][3] = 10;
+                 * this.pointAdd[this.nv][4] = 10; sendPointAddInfo(); updateRuong(null, null,
+                 * -1, null, hopNgocItemArray); ms = new Message(45); ds = ms.writer();
+                 * ds.writeUTF(GameString.phucHoiSuccess()); ds.flush(); sendMessage(ms); }
+                 */
+                // Phuc hoi diem nang cap
+                // moi
                 if (rdE.entry.id == 50) {
                     short newPoint = this.point[this.nv];
-                    this.point[this.nv] = (short) (this.pointAdd[this.nv][0] + this.pointAdd[this.nv][1] + this.pointAdd[this.nv][2] + this.pointAdd[this.nv][3] + this.pointAdd[this.nv][4] + newPoint - 30);
+                    this.point[this.nv] = (short) (this.pointAdd[this.nv][0] + this.pointAdd[this.nv][1]
+                            + this.pointAdd[this.nv][2] + this.pointAdd[this.nv][3] + this.pointAdd[this.nv][4]
+                            + newPoint - 30);
                     this.pointAdd[this.nv][0] = 0;
                     this.pointAdd[this.nv][1] = 0;
                     this.pointAdd[this.nv][2] = 10;
@@ -2143,8 +2163,7 @@ public static String md5(String str){
                     ds.writeUTF(GameString.phucHoiSuccess());
                     ds.flush();
                     sendMessage(ms);
-                }
-                else if (rdE.entry.id == 54) {
+                } else if (rdE.entry.id == 54) {
                     Date dat = new Date();
                     if (this.xpX2Time.before(dat)) {
                         xpX2Time = dat;
@@ -2156,10 +2175,9 @@ public static String md5(String str){
                     ds.writeUTF(GameString.x2XPSuccess());
                     ds.flush();
                     sendMessage(ms);
-                }
-                else if(rdE.entry.id == 76){                    
+                } else if (rdE.entry.id == 76) {
                     this.updateXu(-1000000);
-                    this.AddItemE((short)99);
+                    this.AddItemE((short) 99);
                     updateRuong(null, null, -1, null, hopNgocItemArray);
                     ms = new Message(45);
                     ds = ms.writer();
@@ -2167,8 +2185,7 @@ public static String md5(String str){
                     ds.flush();
                     sendMessage(ms);
                     return;
-                }
-                else if(rdE.entry.id == 84){
+                } else if (rdE.entry.id == 84) {
                     this.updateLuong(1000);
                     updateRuong(null, null, -1, null, hopNgocItemArray);
                     ms = new Message(45);
@@ -2177,7 +2194,7 @@ public static String md5(String str){
                     ds.flush();
                     sendMessage(ms);
                     return;
-                }else if(rdE.entry.id == 85){
+                } else if (rdE.entry.id == 85) {
                     this.updateLuong(500);
                     updateRuong(null, null, -1, null, hopNgocItemArray);
                     ms = new Message(45);
@@ -2186,7 +2203,7 @@ public static String md5(String str){
                     ds.flush();
                     sendMessage(ms);
                     return;
-                }else if(rdE.entry.id == 86){
+                } else if (rdE.entry.id == 86) {
                     this.updateLuong(200);
                     updateRuong(null, null, -1, null, hopNgocItemArray);
                     ms = new Message(45);
@@ -2195,7 +2212,7 @@ public static String md5(String str){
                     ds.flush();
                     sendMessage(ms);
                     return;
-                }else if(rdE.entry.id == 87){
+                } else if (rdE.entry.id == 87) {
                     this.updateLuong(100);
                     updateRuong(null, null, -1, null, hopNgocItemArray);
                     ms = new Message(45);
@@ -2204,7 +2221,7 @@ public static String md5(String str){
                     ds.flush();
                     sendMessage(ms);
                     return;
-                } else if(rdE.entry.id == 93){
+                } else if (rdE.entry.id == 93) {
                     this.updateXP(1000, true);
                     updateRuong(null, null, -1, null, hopNgocItemArray);
                     ms = new Message(45);
@@ -2213,7 +2230,7 @@ public static String md5(String str){
                     ds.flush();
                     sendMessage(ms);
                     return;
-                }else if(rdE.entry.id == 94){
+                } else if (rdE.entry.id == 94) {
                     this.updateXu(10000000);
                     this.updateLuong(5000);
                     updateRuong(null, null, -1, null, hopNgocItemArray);
@@ -2223,202 +2240,224 @@ public static String md5(String str){
                     ds.flush();
                     sendMessage(ms);
                     return;
-                }
-                else if(rdE.entry.id == 85){
-                    this.point[this.nv] = (short)((this.lever[this.nv])+3);
+                } else if (rdE.entry.id == 85) {
+                    this.point[this.nv] = (short) ((this.lever[this.nv]) + 3);
                     ms = new Message(45);
                     ds = ms.writer();
                     ds.writeUTF("Nhận 3 Point thành công");
                     ds.flush();
                     sendMessage(ms);
                     return;
-                }
-                else if(rdE.entry.id == 88){
+                } else if (rdE.entry.id == 88) {
                     int i = rd.nextInt(6);
                     int exp = 3;
-                    if(i == 0) exp = 3;
-                    if(i == 1) exp = 6;
-                    if(i == 2) exp = 9;
-                    if(i == 3) exp = 12;
-                    if(i == 4) exp = 15;      
-                    if(i == 5) exp = 18; 
-                    this.point[this.nv] +=(exp);
+                    if (i == 0)
+                        exp = 3;
+                    if (i == 1)
+                        exp = 6;
+                    if (i == 2)
+                        exp = 9;
+                    if (i == 3)
+                        exp = 12;
+                    if (i == 4)
+                        exp = 15;
+                    if (i == 5)
+                        exp = 18;
+                    this.point[this.nv] += (exp);
                     updateRuong(null, null, -1, null, hopNgocItemArray);
                     ms = new Message(45);
                     ds = ms.writer();
-                    ds.writeUTF("Nhận thành công "+exp+" Point");
+                    ds.writeUTF("Nhận thành công " + exp + " Point");
                     ds.flush();
                     sendMessage(ms);
                     return;
-                }
-                else if(rdE.entry.id == 89){
+                } else if (rdE.entry.id == 89) {
                     int i = rd.nextInt(6);
                     int exp = 4;
-                    if(i == 0) exp = 4;
-                    if(i == 1) exp = 8;
-                    if(i == 2) exp = 12;
-                    if(i == 3) exp = 16;
-                    if(i == 4) exp = 20;      
-                    if(i == 5) exp = 24; 
-                    this.point[this.nv] +=(exp);
+                    if (i == 0)
+                        exp = 4;
+                    if (i == 1)
+                        exp = 8;
+                    if (i == 2)
+                        exp = 12;
+                    if (i == 3)
+                        exp = 16;
+                    if (i == 4)
+                        exp = 20;
+                    if (i == 5)
+                        exp = 24;
+                    this.point[this.nv] += (exp);
                     updateRuong(null, null, -1, null, hopNgocItemArray);
                     ms = new Message(45);
                     ds = ms.writer();
-                    ds.writeUTF("Nhận thành công "+exp+" Point");
+                    ds.writeUTF("Nhận thành công " + exp + " Point");
                     ds.flush();
                     sendMessage(ms);
                     return;
-                }               
-                else if(rdE.entry.id == 95){
+                } else if (rdE.entry.id == 95) {
                     int i = rd.nextInt(5);
                     int exp = 1000;
-                    if(i == 0) exp = 1000;
-                    if(i == 1) exp = 2000;
-                    if(i == 2) exp = 3000;
-                    if(i == 3) exp = 4000;
-                    if(i == 4) exp = 5000;
-                    this.updateXP(exp,true);
+                    if (i == 0)
+                        exp = 1000;
+                    if (i == 1)
+                        exp = 2000;
+                    if (i == 2)
+                        exp = 3000;
+                    if (i == 3)
+                        exp = 4000;
+                    if (i == 4)
+                        exp = 5000;
+                    this.updateXP(exp, true);
                     updateRuong(null, null, -1, null, hopNgocItemArray);
                     ms = new Message(45);
                     ds = ms.writer();
-                    ds.writeUTF("Nhận thành công "+exp+" kinh nghiệm");
+                    ds.writeUTF("Nhận thành công " + exp + " kinh nghiệm");
                     ds.flush();
                     sendMessage(ms);
                     return;
-                }
-                else if(rdE.entry.id == 96){
+                } else if (rdE.entry.id == 96) {
                     int i = rd.nextInt(6);
                     int exp = 50000;
-                    if(i == 0) exp = 50000;
-                    if(i == 1) exp = 60000;
-                    if(i == 2) exp = 70000;
-                    if(i == 3) exp = 80000;
-                    if(i == 4) exp = 90000;      
-                    if(i == 5) exp = 100000; 
+                    if (i == 0)
+                        exp = 50000;
+                    if (i == 1)
+                        exp = 60000;
+                    if (i == 2)
+                        exp = 70000;
+                    if (i == 3)
+                        exp = 80000;
+                    if (i == 4)
+                        exp = 90000;
+                    if (i == 5)
+                        exp = 100000;
                     this.updateXu(exp);
                     updateRuong(null, null, -1, null, hopNgocItemArray);
                     ms = new Message(45);
                     ds = ms.writer();
-                    ds.writeUTF("Nhận thành công "+exp+" xu");
+                    ds.writeUTF("Nhận thành công " + exp + " xu");
                     ds.flush();
                     sendMessage(ms);
                     return;
-                }
-                else if(rdE.entry.id == 97){
+                } else if (rdE.entry.id == 97) {
                     int i = rd.nextInt(6);
                     int exp = 50;
-                    if(i == 0) exp = 50;
-                    if(i == 1) exp = 60;
-                    if(i == 2) exp = 70;
-                    if(i == 3) exp = 80;
-                    if(i == 4) exp = 90;      
-                    if(i == 5) exp = 100; 
+                    if (i == 0)
+                        exp = 50;
+                    if (i == 1)
+                        exp = 60;
+                    if (i == 2)
+                        exp = 70;
+                    if (i == 3)
+                        exp = 80;
+                    if (i == 4)
+                        exp = 90;
+                    if (i == 5)
+                        exp = 100;
                     this.updateLuong(exp);
                     updateRuong(null, null, -1, null, hopNgocItemArray);
                     ms = new Message(45);
                     ds = ms.writer();
-                    ds.writeUTF("Nhận thành công "+exp+" lượng");
+                    ds.writeUTF("Nhận thành công " + exp + " lượng");
                     ds.flush();
                     sendMessage(ms);
                     return;
-                }
-                else if(rdE.entry.id == 98){
+                } else if (rdE.entry.id == 98) {
                     int exp = 100;
-                    this.point[this.nv] +=(exp);
+                    this.point[this.nv] += (exp);
                     ms = new Message(45);
                     ds = ms.writer();
-                    ds.writeUTF("Nhận thành công "+exp+" Point");
-                    ds.flush();
-                    sendMessage(ms);
-                    return;
-                }
-                
-                else if(rdE.entry.id == 99){
-                    int rd = Until.nextInt(7);
-                    String name="Kinh nghiệm x2";
-                    short IDItem=54;
-                    if(rd == 1) 
-                    {
-                        name = "Lục bảo ngọc cấp 10"; IDItem = 9;
-                    }
-                    if(rd == 2) 
-                    {
-                        name = "Hồng ngọc cấp 10"; IDItem = 19;
-                    }
-                    if(rd == 3) 
-                    {
-                        name = "Lam bảo ngọc cấp 10"; IDItem = 29;
-                    }
-                    if(rd == 4) 
-                    {
-                        name = "Hoàng bảo ngọc cấp 10"; IDItem = 39;
-                    }
-                    if(rd == 5) 
-                    {
-                        name = "Thạch anh tím cấp 10"; IDItem = 49;
-                    }
-                    if(rd == 6) 
-                    {
-                        name = "Hoàng Ngọc cấp 11"; IDItem = 92;
-                    }
-                    if(rd == 7) 
-                    {
-                        name = "Lam Ngọc cấp 11"; IDItem = 91;
-                    }
-                    this.AddItemE((short)IDItem);
-                    this.sendMSSToUser(null, "Chúc mừng bạn đã nhận được "+name);
-                    updateRuong(null, null, -1, null, hopNgocItemArray);
-                    ms = new Message(45);
-                    ds = ms.writer();
-                    ds.writeUTF("Nhận được "+name);
+                    ds.writeUTF("Nhận thành công " + exp + " Point");
                     ds.flush();
                     sendMessage(ms);
                     return;
                 }
 
-                else if(rdE.entry.id == 103){
+                else if (rdE.entry.id == 99) {
                     int rd = Until.nextInt(7);
-                    String name="Kinh nghiệm x2";
-                    short IDItem=54;
-                    if(rd == 1) 
-                    {
-                        name = "Lục bảo ngọc cấp 10"; IDItem = 9;
+                    String name = "Kinh nghiệm x2";
+                    short IDItem = 54;
+                    if (rd == 1) {
+                        name = "Lục bảo ngọc cấp 10";
+                        IDItem = 9;
                     }
-                    if(rd == 2) 
-                    {
-                        name = "Hồng ngọc cấp 10"; IDItem = 19;
+                    if (rd == 2) {
+                        name = "Hồng ngọc cấp 10";
+                        IDItem = 19;
                     }
-                    if(rd == 3) 
-                    {
-                        name = "Lam bảo ngọc cấp 10"; IDItem = 29;
+                    if (rd == 3) {
+                        name = "Lam bảo ngọc cấp 10";
+                        IDItem = 29;
                     }
-                    if(rd == 4) 
-                    {
-                        name = "Hoàng bảo ngọc cấp 10"; IDItem = 39;
+                    if (rd == 4) {
+                        name = "Hoàng bảo ngọc cấp 10";
+                        IDItem = 39;
                     }
-                    if(rd == 5) 
-                    {
-                        name = "Thạch anh tím cấp 10"; IDItem = 49;
+                    if (rd == 5) {
+                        name = "Thạch anh tím cấp 10";
+                        IDItem = 49;
                     }
-                    if(rd == 6) 
-                    {
-                        name = "Hoàng Ngọc cấp 11"; IDItem = 92;
+                    if (rd == 6) {
+                        name = "Hoàng Ngọc cấp 11";
+                        IDItem = 92;
                     }
-                    if(rd == 7) 
-                    {
-                        name = "Lam Ngọc cấp 11"; IDItem = 91;
+                    if (rd == 7) {
+                        name = "Lam Ngọc cấp 11";
+                        IDItem = 91;
                     }
-                    this.AddItemE((short)IDItem);
-                    this.sendMSSToUser(null, "Chúc mừng bạn đã nhận được "+name);
+                    this.AddItemE((short) IDItem);
+                    this.sendMSSToUser(null, "Chúc mừng bạn đã nhận được " + name);
                     updateRuong(null, null, -1, null, hopNgocItemArray);
                     ms = new Message(45);
                     ds = ms.writer();
-                    ds.writeUTF("Nhận được "+name);
+                    ds.writeUTF("Nhận được " + name);
                     ds.flush();
                     sendMessage(ms);
                     return;
-                }                
-                
+                }
+
+                else if (rdE.entry.id == 103) {
+                    int rd = Until.nextInt(7);
+                    String name = "Kinh nghiệm x2";
+                    short IDItem = 54;
+                    if (rd == 1) {
+                        name = "Lục bảo ngọc cấp 10";
+                        IDItem = 9;
+                    }
+                    if (rd == 2) {
+                        name = "Hồng ngọc cấp 10";
+                        IDItem = 19;
+                    }
+                    if (rd == 3) {
+                        name = "Lam bảo ngọc cấp 10";
+                        IDItem = 29;
+                    }
+                    if (rd == 4) {
+                        name = "Hoàng bảo ngọc cấp 10";
+                        IDItem = 39;
+                    }
+                    if (rd == 5) {
+                        name = "Thạch anh tím cấp 10";
+                        IDItem = 49;
+                    }
+                    if (rd == 6) {
+                        name = "Hoàng Ngọc cấp 11";
+                        IDItem = 92;
+                    }
+                    if (rd == 7) {
+                        name = "Lam Ngọc cấp 11";
+                        IDItem = 91;
+                    }
+                    this.AddItemE((short) IDItem);
+                    this.sendMSSToUser(null, "Chúc mừng bạn đã nhận được " + name);
+                    updateRuong(null, null, -1, null, hopNgocItemArray);
+                    ms = new Message(45);
+                    ds = ms.writer();
+                    ds.writeUTF("Nhận được " + name);
+                    ds.flush();
+                    sendMessage(ms);
+                    return;
+                }
+
             }
             this.hopNgocAction = 0;
         }
@@ -2496,11 +2535,12 @@ public static String md5(String str){
     }
 
     protected void changePassMessage(Message ms) throws IOException {
-String oldpass = md5.MD5(ms.reader().readUTF());
+        String oldpass = md5.MD5(ms.reader().readUTF());
         String newpass = md5.MD5(ms.reader().readUTF());
         DataOutputStream ds;
         try {
-            ResultSet red = SQLManager.stat.executeQuery("SELECT `user` FROM `user` WHERE `user_id`=" + this.iddb + " AND `password`='" + oldpass + "' LIMIT 1;");
+            ResultSet red = SQLManager.stat.executeQuery("SELECT `user` FROM `user` WHERE `user_id`=" + this.iddb
+                    + " AND `password`='" + oldpass + "' LIMIT 1;");
             if (red == null || !red.first()) {
                 ms = new Message(45);
                 ds = ms.writer();
@@ -2510,7 +2550,8 @@ String oldpass = md5.MD5(ms.reader().readUTF());
                 red.close();
                 return;
             } else {
-                SQLManager.stat.executeUpdate("UPDATE `user` SET `password`='" + newpass + "' WHERE `user_id`=" + this.iddb + " LIMIT 1;");
+                SQLManager.stat.executeUpdate(
+                        "UPDATE `user` SET `password`='" + newpass + "' WHERE `user_id`=" + this.iddb + " LIMIT 1;");
                 ms = new Message(45);
                 ds = ms.writer();
                 ds.writeUTF("Đổi mật khẩu thành công !");
@@ -2574,8 +2615,8 @@ String oldpass = md5.MD5(ms.reader().readUTF());
             }
             this.updateXu(-100000);
         } else if (typeQ == 1) {
-            if (this.luong < 100) {                
-                
+            if (this.luong < 100) {
+
                 ms = new Message(45);
                 ds = ms.writer();
                 ds.writeUTF(GameString.xuNotEnought());
@@ -2590,36 +2631,35 @@ String oldpass = md5.MD5(ms.reader().readUTF());
         ms = new Message(110);
         ds = ms.writer();
         int lucKyNum = Until.nextInt(10);
-        if(Until.nextInt(5) == 1)
-        {
-        this.AddItemE((short)99);
-        this.sendMSSToUser(null, "Chúc mừng bạn đã nhận được 1 bó hoa từ quay số!");
+        if (Until.nextInt(5) == 1) {
+            this.AddItemE((short) 99);
+            this.sendMSSToUser(null, "Chúc mừng bạn đã nhận được 1 bó hoa từ quay số!");
         }
         for (int i = 0; i < 10; i++) {
-            int type = Until.nextInt(new int[]{300, 150, 450, 100});
+            int type = Until.nextInt(new int[] { 300, 150, 450, 100 });
             byte idItem = 0;
             int numb = 0;
             if (type == 0) {
                 idItem = (byte) Until.nextInt(ItemData.entrys.size());
-                numb = (new int[]{2, 10, 15, 20})[Until.nextInt(new int[]{400, 300, 200, 100})];
+                numb = (new int[] { 2, 10, 15, 20 })[Until.nextInt(new int[] { 400, 300, 200, 100 })];
                 if (i == lucKyNum) {
                     this.updateItem(idItem, numb);
-                    
+
                 }
             }
             if (type == 1) {
-                numb = (new int[]{50000, 100000, 150000, 300000})[Until.nextInt(new int[]{400, 300, 200, 100})];
+                numb = (new int[] { 50000, 100000, 150000, 300000 })[Until.nextInt(new int[] { 400, 300, 200, 100 })];
                 if (i == lucKyNum) {
                     this.updateXu(numb);
                 }
             }
             if (type == 2) {
-                numb = (new int[]{500, 100, 1500, 2000})[Until.nextInt(new int[]{400, 300, 200, 100})];
+                numb = (new int[] { 500, 100, 1500, 2000 })[Until.nextInt(new int[] { 400, 300, 200, 100 })];
                 if (i == lucKyNum) {
                     this.updateXP(numb, true);
                 }
             }
-            
+
             ds.writeByte(type);
             ds.writeByte(idItem);
             ds.writeInt(numb);
@@ -2671,18 +2711,19 @@ String oldpass = md5.MD5(ms.reader().readUTF());
         ds.flush();
         sendMessage(ms);
     }
-public void AddItemE(short ms) throws IOException {
-    
-   SpecialItemEntry spE = SpecialItemData.getSpecialItemById(ms);
-            ArrayList<ruongDoItemEntry> arrayI = new ArrayList<>();
-            ruongDoItemEntry rdE = new ruongDoItemEntry();
-            rdE.entry = spE;
-            rdE.numb = 1;
-            arrayI.add(rdE);
-            updateRuong(null, null, -1, arrayI, null);
-            
 
-}
+    public void AddItemE(short ms) throws IOException {
+
+        SpecialItemEntry spE = SpecialItemData.getSpecialItemById(ms);
+        ArrayList<ruongDoItemEntry> arrayI = new ArrayList<>();
+        ruongDoItemEntry rdE = new ruongDoItemEntry();
+        rdE.entry = spE;
+        rdE.numb = 1;
+        arrayI.add(rdE);
+        updateRuong(null, null, -1, arrayI, null);
+
+    }
+
     protected void buyEquipMessage(Message ms) throws IOException {
         byte type = ms.reader().readByte();
         log("type: " + type);
@@ -2817,9 +2858,10 @@ public void AddItemE(short ms) throws IOException {
                         for (int i = 0; i < 3; i++) {
                             int id = hopNgocTB.slot[i];
                             SpecialItemEntry entry = SpecialItemData.getSpecialItemById(id);
-                         if(id!=-1) {  log("all = "+ entry.GetAll());
-                            hopNgocGia += entry.buyXu;
-                         }
+                            if (id != -1) {
+                                log("all = " + entry.GetAll());
+                                hopNgocGia += entry.buyXu;
+                            }
                         }
                         hopNgocGia = hopNgocGia / 4;
                         if (this.xu < hopNgocGia) {
@@ -2829,39 +2871,39 @@ public void AddItemE(short ms) throws IOException {
                             ds.flush();
                             sendMessage(ms);
                         } else {
-                            //this.updateXu(-hopNgocGia); // hop ngoc
-                            //for(int i = 0; i < 3; i++) {
-                            //    int id = hopNgocTB.slot[i]; hopNgocTB.slot[i] = -1;
-                            //    ruongDoItemEntry rdE = new ruongDoItemEntry();
-                            //    rdE.entry = SpecialItemData.getSpecialItemById(id);
-                            //    rdE.numb = 1;
-                            //    hopNgocItemArray.add(rdE);
-                            //    hopNgocGia+=rdE.entry.buyXu;
+                            // this.updateXu(-hopNgocGia); // hop ngoc
+                            // for(int i = 0; i < 3; i++) {
+                            // int id = hopNgocTB.slot[i]; hopNgocTB.slot[i] = -1;
+                            // ruongDoItemEntry rdE = new ruongDoItemEntry();
+                            // rdE.entry = SpecialItemData.getSpecialItemById(id);
+                            // rdE.numb = 1;
+                            // hopNgocItemArray.add(rdE);
+                            // hopNgocGia+=rdE.entry.buyXu;
                             // Hợp ngọc BUG
-                            //}
+                            // }
                             hopNgocTB.slotNull = 3;
                             this.updateXu(-hopNgocGia); // hop ngoc
                             for (int i = 0; i < 3; i++) {
                                 int id = hopNgocTB.slot[i];
-                                hopNgocTB.slot[i] = -1;                                
-                                ruongDoItemEntry rdE = new ruongDoItemEntry();      
+                                hopNgocTB.slot[i] = -1;
+                                ruongDoItemEntry rdE = new ruongDoItemEntry();
                                 rdE.entry = SpecialItemData.getSpecialItemById(id);
                                 rdE.numb = 1;
-                                if(id!=-1) {     
-                                for (int j = 0; j < 5; j++) {
-                                hopNgocTB.invAdd[j] -= rdE.entry.ability[j];
+                                if (id != -1) {
+                                    for (int j = 0; j < 5; j++) {
+                                        hopNgocTB.invAdd[j] -= rdE.entry.ability[j];
+                                    }
+                                    // log("id=" + id);
+                                    hopNgocItemArray.add(rdE);
+                                    hopNgocGia += rdE.entry.buyXu;
                                 }
-                                //log("id=" + id);
-                                hopNgocItemArray.add(rdE);
-                                hopNgocGia += rdE.entry.buyXu;
-                                 }
                             }
                             hopNgocTB.slotNull = 3;
                             updateRuong(hopNgocTB, null, -1, hopNgocItemArray, null);
                             ms = new Message(45);
                             ds = ms.writer();
                             ds.writeUTF(GameString.thaoNgocSuccess());
-                           
+
                             ds.flush();
                             sendMessage(ms);
                         }
@@ -2901,7 +2943,8 @@ public void AddItemE(short ms) throws IOException {
                 }
                 if (spEntry.id == 94) {
                     continue;
-                }if (spEntry.id == 93) {
+                }
+                if (spEntry.id == 93) {
                     continue;
                 }
                 ds.writeByte(spEntry.id);
@@ -2927,17 +2970,12 @@ public void AddItemE(short ms) throws IOException {
                 ds.flush();
                 sendMessage(ms);
                 return;
-            }            
-            SpecialItemEntry spE = SpecialItemData.getSpecialItemById(idS); //mua vat pham event
-            /*if(spE.id == 94 || spE.id == 93)
-            {
-              ms = new Message(45);
-                    ds = ms.writer();
-                    ds.writeUTF("Vật phẩm không thể mua");
-                    ds.flush();
-                    sendMessage(ms);
-                    return;  
-            }*/
+            }
+            SpecialItemEntry spE = SpecialItemData.getSpecialItemById(idS); // mua vat pham event
+            /*
+             * if(spE.id == 94 || spE.id == 93) { ms = new Message(45); ds = ms.writer();
+             * ds.writeUTF("Vật phẩm không thể mua"); ds.flush(); sendMessage(ms); return; }
+             */
             // Mua bang xu
             if (buyLuong == 0) {
                 int gia = numb * spE.buyXu;
@@ -2965,7 +3003,7 @@ public void AddItemE(short ms) throws IOException {
             } else {
                 return;
             }
-            
+
             ArrayList<ruongDoItemEntry> arrayI = new ArrayList<>();
             ruongDoItemEntry rdE = new ruongDoItemEntry();
             rdE.entry = spE;
@@ -3130,7 +3168,8 @@ public void AddItemE(short ms) throws IOException {
             Message ms = new Message(29);
             DataOutputStream ds = ms.writer();
             // Get user detal
-            ResultSet red = SQLManager.stat.executeQuery("SELECT friends FROM armymem WHERE id=\"" + iddb + "\" LIMIT 1;");
+            ResultSet red = SQLManager.stat
+                    .executeQuery("SELECT friends FROM armymem WHERE id=\"" + iddb + "\" LIMIT 1;");
             red.first();
             JSONArray jarr = (JSONArray) JSONValue.parse(red.getString("friends"));
             red.close();
@@ -3141,14 +3180,16 @@ public void AddItemE(short ms) throws IOException {
                 red.first();
                 ds.writeUTF(red.getString("user"));
                 red.close();
-                red = SQLManager.stat.executeQuery("SELECT xu,`NVused`,`clan`,`online` FROM armymem WHERE id=\"" + iddbFR + "\" LIMIT 1;");
+                red = SQLManager.stat.executeQuery(
+                        "SELECT xu,`NVused`,`clan`,`online` FROM armymem WHERE id=\"" + iddbFR + "\" LIMIT 1;");
                 red.first();
                 ds.writeInt(red.getInt("xu"));
                 ds.writeByte((nv = red.getByte("NVUsed")) - 1);
                 ds.writeShort(red.getShort("clan"));
                 ds.writeByte(red.getByte("online"));
                 red.close();
-                red = SQLManager.stat.executeQuery("SELECT NV" + nv + " FROM armymem WHERE id=\"" + iddbFR + "\" LIMIT 1;");
+                red = SQLManager.stat
+                        .executeQuery("SELECT NV" + nv + " FROM armymem WHERE id=\"" + iddbFR + "\" LIMIT 1;");
                 red.first();
                 JSONObject jobj = (JSONObject) JSONValue.parse(red.getString("NV" + nv));
                 red.close();
@@ -3168,7 +3209,7 @@ public void AddItemE(short ms) throws IOException {
                     if (indexS >= 0 && indexS < jarr1.size()) {
                         JSONObject jobj1 = (JSONObject) jarr1.get(indexS);
                         ds.writeShort(Short.parseShort(jobj1.get("id").toString()));
-//                                ((Long)jobj1.get("id")).shortValue());
+                        // ((Long)jobj1.get("id")).shortValue());
                     } else if (nvEquipDefault[nv - 1][j] != null) {
                         ds.writeShort(nvEquipDefault[nv - 1][j].id);
                     } else {
@@ -3193,7 +3234,8 @@ public void AddItemE(short ms) throws IOException {
         ms = new Message(36);
         DataOutputStream ds = ms.writer();
         try {
-            ResultSet red = SQLManager.stat.executeQuery("SELECT `user_id`,`user` FROM `user` WHERE user=\"" + user + "\" LIMIT 1;");
+            ResultSet red = SQLManager.stat
+                    .executeQuery("SELECT `user_id`,`user` FROM `user` WHERE user=\"" + user + "\" LIMIT 1;");
             if (red.first()) {
                 ds.writeInt(red.getInt("user_id"));
                 ds.writeUTF(red.getString("user"));
@@ -3212,7 +3254,8 @@ public void AddItemE(short ms) throws IOException {
             ms = new Message(32);
             DataOutputStream ds = ms.writer();
             // Get user detals
-            ResultSet red = SQLManager.stat.executeQuery("SELECT `friends` FROM `armymem` WHERE id=\"" + this.iddb + "\" LIMIT 1;");
+            ResultSet red = SQLManager.stat
+                    .executeQuery("SELECT `friends` FROM `armymem` WHERE id=\"" + this.iddb + "\" LIMIT 1;");
             red.first();
             JSONArray jarr = (JSONArray) JSONValue.parse(red.getString("friends"));
             red.close();
@@ -3231,7 +3274,8 @@ public void AddItemE(short ms) throws IOException {
                     ds.writeByte(1);
                 } else {
                     jarr.add(iddb);
-                    SQLManager.stat.executeUpdate("UPDATE `armymem` SET `friends`='" + jarr.toJSONString() + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+                    SQLManager.stat.executeUpdate("UPDATE `armymem` SET `friends`='" + jarr.toJSONString()
+                            + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
                     ds.writeInt(0);
                 }
             }
@@ -3254,7 +3298,8 @@ public void AddItemE(short ms) throws IOException {
             ms = new Message(33);
             DataOutputStream ds = ms.writer();
             // Get user detals
-            ResultSet red = SQLManager.stat.executeQuery("SELECT `friends` FROM `armymem` WHERE id=\"" + this.iddb + "\" LIMIT 1;");
+            ResultSet red = SQLManager.stat
+                    .executeQuery("SELECT `friends` FROM `armymem` WHERE id=\"" + this.iddb + "\" LIMIT 1;");
             red.first();
             JSONArray jarr = (JSONArray) JSONValue.parse(red.getString("friends"));
             red.close();
@@ -3268,7 +3313,8 @@ public void AddItemE(short ms) throws IOException {
             }
             if (index >= 0) {
                 jarr.remove(index);
-                SQLManager.stat.executeUpdate("UPDATE `armymem` SET `friends`='" + jarr.toJSONString() + "' WHERE `id`=" + this.iddb + " LIMIT 1;");
+                SQLManager.stat.executeUpdate("UPDATE `armymem` SET `friends`='" + jarr.toJSONString() + "' WHERE `id`="
+                        + this.iddb + " LIMIT 1;");
             }
             ds.writeInt(0);
             ds.flush();
@@ -3338,11 +3384,13 @@ public void AddItemE(short ms) throws IOException {
             ms = new Message(34);
             DataOutputStream ds = ms.writer();
             ds.writeInt(iddb);
-            ResultSet red = SQLManager.stat.executeQuery("SELECT `user` FROM `user` WHERE user_id=\"" + iddb + "\" LIMIT 1;");
+            ResultSet red = SQLManager.stat
+                    .executeQuery("SELECT `user` FROM `user` WHERE user_id=\"" + iddb + "\" LIMIT 1;");
             red.first();
             ds.writeUTF(red.getString("user"));
             red.close();
-            red = SQLManager.stat.executeQuery("SELECT `xu`,`luong`,`NVused`,`dvong`,`top` FROM `armymem` WHERE id=\"" + iddb + "\" LIMIT 1;");
+            red = SQLManager.stat.executeQuery(
+                    "SELECT `xu`,`luong`,`NVused`,`dvong`,`top` FROM `armymem` WHERE id=\"" + iddb + "\" LIMIT 1;");
             red.first();
             ds.writeInt(red.getInt("xu"));
             byte nv = red.getByte("NVUsed");
@@ -3350,7 +3398,8 @@ public void AddItemE(short ms) throws IOException {
             int dvong = red.getInt("dvong");
             int top = red.getInt("top");
             red.close();
-            red = SQLManager.stat.executeQuery("SELECT `NV" + nv + "` FROM `armymem` WHERE id=\"" + iddb + "\" LIMIT 1;");
+            red = SQLManager.stat
+                    .executeQuery("SELECT `NV" + nv + "` FROM `armymem` WHERE id=\"" + iddb + "\" LIMIT 1;");
             red.first();
             JSONObject jobj = (JSONObject) JSONValue.parse(red.getString("NV" + nv));
             red.close();
