@@ -1,0 +1,4 @@
+src=src
+compile=compile
+name=Army.jar
+release=Release.jar
